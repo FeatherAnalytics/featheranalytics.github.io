@@ -1,12 +1,12 @@
 ---
 layout: post
-title: Sample blog post to learn markdown tips
-subtitle: There's lots to learn!
-gh-repo: daattali/beautiful-jekyll
-gh-badge: [star, fork, follow]
-tags: [test]
+title: The first dbt post
+subtitle: data-blogging-tables to show off data build tool
+gh-repo: FeatherAnalytics/data-blogging-tables
+gh-badge: [star, follow]
+tags: [dbt]
 comments: true
-author: Bill Smith
+author: David Hardage
 ---
 
 {: .box-success}
@@ -89,3 +89,12 @@ When hosting a *project site* on GitHub Pages (for example, `https://USERNAME.gi
 If the above image is broken, then you'll need to follow the instructions [in the FAQ](https://beautifuljekyll.com/faq/#links-in-project-page). Here is proof that it can be fixed:
 
 ![Crepe]({{ '/assets/img/crepe.jpg' | relative_url }})
+
+
+# Introduction
+
+In this post, I will cover my [data-blogging-tables](https://github.com/FeatherAnalytics/data-blogging-tables) repo, and more specifically my first model, the [hierarchy_model](https://github.com/FeatherAnalytics/data-blogging-tables/blob/main/models/marts/jinja_tricks/hierarchy_model.sql). 
+
+# Setup
+
+This model uses a recursive CTE and [jinja](https://jinja.palletsprojects.com/) to construct a 2D table of an organizational hierarchy. Typically, a recursive CTE can construct a hierarchy, but only if there are no **skip-levels**. What I mean by **skip-level** is a member of the hierarchy reporting directly to someone more than one level above them. 
