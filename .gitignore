@@ -14,3 +14,7 @@ beautiful-jekyll-theme-*.gem
 
 # claude
 .claude/
+CLAUDE.md
+
+# rtk
+./rtk
