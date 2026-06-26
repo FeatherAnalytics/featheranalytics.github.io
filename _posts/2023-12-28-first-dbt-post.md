@@ -6,6 +6,7 @@ gh-repo: FeatherAnalytics/data-blogging-tables
 gh-badge: [star, follow]
 tags: [dbt]
 comments: true
+published: false
 author: David Hardage
 ---
 
