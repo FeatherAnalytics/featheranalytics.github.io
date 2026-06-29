@@ -1335,6 +1335,35 @@ html.dark-mode #nav-search-exit:hover {
   color: #e0e6ed;
 }
 
+/* --- Social icons (footer) --- */
+html.dark-mode .footer-links a {
+  color: #8b9db5;
+}
+html.dark-mode .footer-links a:hover,
+html.dark-mode .footer-links a:focus {
+  color: #e0e6ed;
+}
+html.dark-mode .footer-links .fa-circle {
+  color: #2a3a4e;
+}
+html.dark-mode .footer-links a:hover .fa-circle {
+  color: #4fc3f7;
+}
+
+.footer-links a {
+  color: #5a6c7d;
+}
+.footer-links a:hover,
+.footer-links a:focus {
+  color: #0d2137;
+}
+.footer-links .fa-circle {
+  color: #dce3e8;
+}
+.footer-links a:hover .fa-circle {
+  color: #039be5;
+}
+
 /* --- Dark mode toggle button --- */
 #theme-toggle {
   color: inherit;
