@@ -29,6 +29,7 @@ let BeautifulJekyllJS = {
     BeautifulJekyllJS.initImgs();
 
     BeautifulJekyllJS.initSearch();
+    BeautifulJekyllJS.initDarkMode();
   },
 
   initNavbar : function() {
@@ -132,6 +133,39 @@ let BeautifulJekyllJS = {
       if (e.key == "Escape") {
         $("#beautifuljekyll-search-overlay").hide();
         $("body").removeClass("overflow-hidden");
+      }
+    });
+  },
+
+  initDarkMode : function() {
+    var toggle = document.getElementById('theme-toggle');
+    var icon = document.getElementById('theme-toggle-icon');
+    if (!toggle || !icon) return;
+
+    var isDark = document.documentElement.classList.contains('dark-mode');
+    icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+
+    toggle.addEventListener('click', function() {
+      document.documentElement.classList.add('dark-mode-transition');
+      var nowDark = document.documentElement.classList.toggle('dark-mode');
+      icon.className = nowDark ? 'fas fa-sun' : 'fas fa-moon';
+      localStorage.setItem('theme', nowDark ? 'dark' : 'light');
+      setTimeout(BeautifulJekyllJS.initNavbar, 50);
+      setTimeout(function() {
+        document.documentElement.classList.remove('dark-mode-transition');
+      }, 350);
+    });
+
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+      if (!localStorage.getItem('theme')) {
+        if (e.matches) {
+          document.documentElement.classList.add('dark-mode');
+          icon.className = 'fas fa-sun';
+        } else {
+          document.documentElement.classList.remove('dark-mode');
+          icon.className = 'fas fa-moon';
+        }
+        setTimeout(BeautifulJekyllJS.initNavbar, 50);
       }
     });
   }

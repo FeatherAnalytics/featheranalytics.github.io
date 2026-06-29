@@ -59,3 +59,60 @@
 .highlight .vg { color: #008080 } /* Name.Variable.Global */
 .highlight .vi { color: #008080 } /* Name.Variable.Instance */
 .highlight .il { color: #009999 } /* Literal.Number.Integer.Long */
+
+/* --- Dark mode syntax highlighting --- */
+html.dark-mode .highlight .c,
+html.dark-mode .highlight .cm,
+html.dark-mode .highlight .c1,
+html.dark-mode .highlight .cs,
+html.dark-mode .highlight .cp { color: #8b9db5; font-style: italic }
+html.dark-mode .highlight .k,
+html.dark-mode .highlight .kc,
+html.dark-mode .highlight .kd,
+html.dark-mode .highlight .kp,
+html.dark-mode .highlight .kr,
+html.dark-mode .highlight .kt,
+html.dark-mode .highlight .o,
+html.dark-mode .highlight .ow { color: #4fc3f7 }
+html.dark-mode .highlight .s,
+html.dark-mode .highlight .sb,
+html.dark-mode .highlight .sc,
+html.dark-mode .highlight .sd,
+html.dark-mode .highlight .s2,
+html.dark-mode .highlight .se,
+html.dark-mode .highlight .sh,
+html.dark-mode .highlight .si,
+html.dark-mode .highlight .sx,
+html.dark-mode .highlight .s1,
+html.dark-mode .highlight .ss,
+html.dark-mode .highlight .sr { color: #4db6ac }
+html.dark-mode .highlight .m,
+html.dark-mode .highlight .mf,
+html.dark-mode .highlight .mh,
+html.dark-mode .highlight .mi,
+html.dark-mode .highlight .mo,
+html.dark-mode .highlight .il { color: #ffca28 }
+html.dark-mode .highlight .na,
+html.dark-mode .highlight .no,
+html.dark-mode .highlight .nv,
+html.dark-mode .highlight .vc,
+html.dark-mode .highlight .vg,
+html.dark-mode .highlight .vi { color: #ffca28 }
+html.dark-mode .highlight .err { color: #ef5350; background-color: transparent }
+html.dark-mode .highlight .gd { color: #ef5350; background-color: rgba(239, 83, 80, 0.1) }
+html.dark-mode .highlight .gi { color: #4db6ac; background-color: rgba(77, 182, 172, 0.1) }
+html.dark-mode .highlight .nb { color: #81d4fa }
+html.dark-mode .highlight .nc,
+html.dark-mode .highlight .nf,
+html.dark-mode .highlight .ne { color: #81d4fa; font-weight: bold }
+html.dark-mode .highlight .nn { color: #8b9db5 }
+html.dark-mode .highlight .nt { color: #4fc3f7 }
+html.dark-mode .highlight .ni { color: #81d4fa }
+html.dark-mode .highlight .gh,
+html.dark-mode .highlight .gu { color: #8b9db5 }
+html.dark-mode .highlight .gp { color: #8b9db5 }
+html.dark-mode .highlight .go { color: #8b9db5 }
+html.dark-mode .highlight .bp { color: #8b9db5 }
+html.dark-mode .highlight .w { color: #2a3a4e }
+html.dark-mode .highlight .gr,
+html.dark-mode .highlight .gt { color: #ef5350 }
