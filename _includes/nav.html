@@ -41,12 +41,6 @@
     </ul>
   </div>
 
-  <button id="theme-toggle" class="btn btn-link nav-link" type="button"
-          aria-label="Toggle dark mode" title="Toggle dark mode"
-          style="font-size: 1.1rem; padding: 0.5rem 0.75rem; border: none; background: none; cursor: pointer;">
-    <i class="fas fa-moon" id="theme-toggle-icon"></i>
-  </button>
-
   {% if site.navbar-extra %}
     {% for file in site.navbar-extra %}
       {% include {{ file }} %}
