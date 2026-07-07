@@ -22,6 +22,7 @@ author: David Hardage
 navbar-links:
   About Me: "aboutme"
   Projects: "projects"
+  Talks: "talks"
   #Resources:
   Author's home: "https://www.featheranalytics.dev/"
 
