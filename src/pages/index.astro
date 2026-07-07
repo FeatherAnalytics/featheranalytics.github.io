@@ -1,0 +1,54 @@
+---
+import Base from '../layouts/Base.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import ProjectCard from '../components/ProjectCard.astro';
+
+const featuredProjects = [
+  {
+    title: 'Capital Flow Cityscape',
+    description: 'A 3D cityscape where buildings represent financial securities and capital flows become visible paths through a living city.',
+    tags: ['Three.js', 'BigQuery', 'Python'],
+    href: 'https://www.featheranalytics.dev/capital-flows-city/',
+  },
+  {
+    title: 'UrbanStack',
+    description: 'Multi-layer urban data platform combining transportation, infrastructure, walkability, and demographic data for major US cities.',
+    tags: ['Next.js', 'deck.gl', 'DuckDB'],
+    href: 'https://www.featheranalytics.dev/urbanstack',
+  },
+  {
+    title: 'World Cup 2026',
+    description: 'Interactive map exploring where every player was born versus which national team they represent.',
+    tags: ['Next.js', 'deck.gl', 'MapLibre'],
+    href: 'https://www.featheranalytics.dev/worldcup-2026',
+  },
+];
+---
+<Base title="Home" description="Feather — data projects, talks, and writing by David Hardage.">
+  <div class="flex flex-col min-h-screen">
+    <Nav />
+    <main class="flex-1">
+      <section class="max-w-3xl mx-auto px-4 sm:px-6 pt-16 pb-12">
+        <h1 class="text-4xl sm:text-5xl font-bold text-navy dark:text-dark-text">
+          David Hardage
+        </h1>
+        <p class="mt-4 text-lg text-text dark:text-dark-body max-w-2xl">
+          Senior Analytics Engineer in Texas. I build data visualizations and write about tech, economics, and data.
+        </p>
+      </section>
+
+      <section class="max-w-3xl mx-auto px-4 sm:px-6 pb-16">
+        <h2 class="text-sm font-semibold uppercase tracking-wider text-text-secondary dark:text-dark-secondary mb-4">
+          Featured Projects
+        </h2>
+        <div class="space-y-4">
+          {featuredProjects.map(project => (
+            <ProjectCard {...project} />
+          ))}
+        </div>
+      </section>
+    </main>
+    <Footer />
+  </div>
+</Base>

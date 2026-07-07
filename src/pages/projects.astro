@@ -1,0 +1,37 @@
+---
+import Page from '../layouts/Page.astro';
+import ProjectCard from '../components/ProjectCard.astro';
+
+const projects = [
+  {
+    title: 'Capital Flow Cityscape',
+    description: 'A 3D cityscape where buildings represent financial securities, districts represent asset classes, and the flows of capital between them become visible paths through a living city. Built on Three.js with randomized data.',
+    tags: ['Three.js', 'BigQuery', 'Python'],
+    href: 'https://www.featheranalytics.dev/capital-flows-city/',
+    links: [
+      { label: 'Main View', href: 'https://www.featheranalytics.dev/capital-flows-city/' },
+      { label: 'Selloff View', href: 'https://www.featheranalytics.dev/capital-flows-city/selloff.html' },
+      { label: 'Single Day', href: 'https://www.featheranalytics.dev/capital-flows-city/one_day.html' },
+    ],
+  },
+  {
+    title: 'UrbanStack',
+    description: 'A multi-layer urban data platform combining transportation, infrastructure spending, walkability, demographics, and economic data for major US cities.',
+    tags: ['Next.js', 'deck.gl', 'DuckDB', 'Python'],
+    href: 'https://www.featheranalytics.dev/urbanstack',
+  },
+  {
+    title: 'World Cup 2026: Where Players Come From',
+    description: "An interactive map exploring where every player in the 2026 FIFA World Cup was born versus which national team they represent. Nearly 1 in 4 players represents a country they weren't born in.",
+    tags: ['Next.js', 'deck.gl', 'MapLibre', 'Python'],
+    href: 'https://www.featheranalytics.dev/worldcup-2026',
+  },
+];
+---
+<Page title="Projects" subtitle="Data visualizations and tools" description="Data visualization projects by David Hardage — 3D capital flows, urban data platforms, and interactive maps.">
+  <div class="space-y-4 not-prose">
+    {projects.map(project => (
+      <ProjectCard {...project} />
+    ))}
+  </div>
+</Page>
