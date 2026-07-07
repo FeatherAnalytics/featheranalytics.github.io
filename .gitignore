@@ -1,18 +1,22 @@
-# project
-_site
-.sass-cache
-.vagrant
-
-# general
+node_modules/
+dist/
+.astro/
 .DS_Store
-Thumbs.db
-ehthumbs.db
+*.pptx
 
-Gemfile.lock
+# IDE
+.vscode/
+.idea/
 
-beautiful-jekyll-theme-*.gem
+# Environment
+.env
+.env.*
 
-# claude
+# Docs/thoughts (not deployed)
+thoughts/
+docs/
+
+# Claude
 .claude/
 CLAUDE.md
 

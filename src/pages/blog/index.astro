@@ -1,0 +1,30 @@
+---
+import { getCollection } from 'astro:content';
+import Page from '../../layouts/Page.astro';
+
+const posts = (await getCollection('blog'))
+  .filter(post => post.data.published)
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+---
+<Page title="Blog" description="Writing about tech, economics, and data by David Hardage.">
+  {posts.length === 0 ? (
+    <p>No posts yet.</p>
+  ) : (
+    <div class="space-y-6 not-prose">
+      {posts.map(post => (
+        <a href={`/blog/${post.id}`} class="group block p-5 rounded-xl border border-border dark:border-dark-border hover:border-link dark:hover:border-dark-link bg-cloud dark:bg-dark-bg transition-colors">
+          <h3 class="text-lg font-semibold text-navy dark:text-dark-text group-hover:text-link dark:group-hover:text-dark-link transition-colors">
+            {post.data.title}
+          </h3>
+          {post.data.subtitle && (
+            <p class="mt-1 text-text-secondary dark:text-dark-secondary text-sm">{post.data.subtitle}</p>
+          )}
+          <p class="mt-2 text-text dark:text-dark-body text-sm">{post.data.description}</p>
+          <time class="mt-2 block text-xs text-text-secondary dark:text-dark-secondary" datetime={post.data.pubDate.toISOString()}>
+            {post.data.pubDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+          </time>
+        </a>
+      ))}
+    </div>
+  )}
+</Page>
