@@ -1,6 +1,8 @@
 ---
 import Page from '../layouts/Page.astro';
 import ProjectCard from '../components/ProjectCard.astro';
+import FeaturedProject from '../components/FeaturedProject.astro';
+import { cinemetrics } from '../data/featured';
 
 const projects = [
   {
@@ -29,7 +31,11 @@ const projects = [
   },
 ];
 ---
-<Page title="Projects" subtitle="Data visualizations and tools" description="Data visualization projects by David Hardage — 3D capital flows, urban data platforms, and interactive maps.">
+<Page title="Projects" subtitle="Data visualizations and tools" description="Data visualization projects by David Hardage — an eight-year film analytics pipeline, 3D capital flows, urban data platforms, and interactive maps.">
+  <div class="not-prose">
+    <FeaturedProject {...cinemetrics} />
+  </div>
+  <h2 class="eyebrow text-ink-muted mt-10 mb-4 not-prose">More Projects</h2>
   <div class="space-y-4 not-prose">
     {projects.map(project => (
       <ProjectCard {...project} />

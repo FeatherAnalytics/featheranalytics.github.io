@@ -12,15 +12,15 @@ const posts = (await getCollection('blog'))
   ) : (
     <div class="space-y-6 not-prose">
       {posts.map(post => (
-        <a href={`/blog/${post.id}`} class="group block p-5 rounded-xl border border-border dark:border-dark-border hover:border-link dark:hover:border-dark-link bg-cloud dark:bg-dark-bg transition-colors">
-          <h3 class="text-lg font-semibold text-navy dark:text-dark-text group-hover:text-link dark:group-hover:text-dark-link transition-colors">
+        <a href={`/blog/${post.id}`} class="group block p-5 rounded-lg border border-rule bg-card hover:border-accent transition-colors">
+          <h3 class="font-display text-lg font-semibold tracking-tight text-ink group-hover:text-accent transition-colors">
             {post.data.title}
           </h3>
           {post.data.subtitle && (
-            <p class="mt-1 text-text-secondary dark:text-dark-secondary text-sm">{post.data.subtitle}</p>
+            <p class="mt-1 text-ink-muted text-sm">{post.data.subtitle}</p>
           )}
-          <p class="mt-2 text-text dark:text-dark-body text-sm">{post.data.description}</p>
-          <time class="mt-2 block text-xs text-text-secondary dark:text-dark-secondary" datetime={post.data.pubDate.toISOString()}>
+          <p class="mt-2 text-ink-body text-sm">{post.data.description}</p>
+          <time class="eyebrow mt-3 block text-ink-muted" datetime={post.data.pubDate.toISOString()}>
             {post.data.pubDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
           </time>
         </a>

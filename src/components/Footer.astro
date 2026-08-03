@@ -5,9 +5,9 @@ const socialLinks = [
   { label: 'Email', href: 'mailto:featheranalytics@proton.me', icon: 'M1.5 8.67v8.58a3 3 0 003 3h15a3 3 0 003-3V8.67l-8.928 5.493a3 3 0 01-3.144 0L1.5 8.67z M22.5 6.908V6.75a3 3 0 00-3-3h-15a3 3 0 00-3 3v.158l9.714 5.978a1.5 1.5 0 001.572 0L22.5 6.908z' },
 ];
 ---
-<footer class="border-t border-border dark:border-dark-border mt-auto">
+<footer class="border-t border-rule bg-paper mt-auto">
   <div class="max-w-3xl mx-auto px-4 sm:px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-    <p class="text-text-secondary dark:text-dark-secondary text-sm">
+    <p class="eyebrow text-ink-muted">
       &copy; {new Date().getFullYear()} David Hardage
     </p>
     <div class="flex items-center gap-4">
@@ -17,7 +17,7 @@ const socialLinks = [
           aria-label={link.label}
           target={link.href.startsWith('mailto:') ? undefined : '_blank'}
           rel={link.href.startsWith('mailto:') ? undefined : 'noopener noreferrer'}
-          class="text-text-secondary dark:text-dark-secondary hover:text-navy dark:hover:text-dark-text transition-colors"
+          class="text-ink-muted hover:text-accent transition-colors"
         >
           <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
             <path d={link.icon} />
@@ -27,7 +27,7 @@ const socialLinks = [
       <a
         href="/rss.xml"
         aria-label="RSS Feed"
-        class="text-text-secondary dark:text-dark-secondary hover:text-navy dark:hover:text-dark-text transition-colors"
+        class="text-ink-muted hover:text-accent transition-colors"
       >
         <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M4 11a9 9 0 0 1 9 9" /><path d="M4 4a16 16 0 0 1 16 16" /><circle cx="5" cy="19" r="1" fill="currentColor" />
