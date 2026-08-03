@@ -35,6 +35,7 @@ export function log10(domain: Span, range: Span): Scale {
 }
 
 export function linearTicks(domain: Span, count = 5): number[] {
+  if (count < 2) throw new Error(`linearTicks: count must be at least 2, got ${count}`);
   const [d0, d1] = domain;
   const step = (d1 - d0) / (count - 1);
   return Array.from({ length: count }, (_, i) => d0 + i * step);

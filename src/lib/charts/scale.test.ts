@@ -40,11 +40,21 @@ describe('linearTicks', () => {
   it('returns round values covering the domain', () => {
     expect(linearTicks([0, 100], 5)).toEqual([0, 25, 50, 75, 100]);
   });
+
+  it('rejects a count below two, which has no spacing to compute', () => {
+    expect(() => linearTicks([0, 100], 1)).toThrow(/count/);
+    expect(() => linearTicks([0, 100], 0)).toThrow(/count/);
+  });
 });
 
 describe('decadeTicks', () => {
   it('returns every power of ten inside the domain, inclusive', () => {
     expect(decadeTicks([0.04, 30])).toEqual([0.1, 1, 10]);
     expect(decadeTicks([1, 1_000_000])).toEqual([1, 10, 100, 1000, 10_000, 100_000, 1_000_000]);
+  });
+
+  it('rejects a non-positive domain, which has no logarithm', () => {
+    expect(() => decadeTicks([0, 10])).toThrow(/positive/);
+    expect(() => decadeTicks([-1, 10])).toThrow(/positive/);
   });
 });
