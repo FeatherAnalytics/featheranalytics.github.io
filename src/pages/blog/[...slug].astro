@@ -2,12 +2,17 @@
 import { getCollection, render } from 'astro:content';
 import Post from '../../layouts/Post.astro';
 
+// Filtered on `published`, same as the blog index and the RSS feed. Without it a
+// draft still gets a reachable URL and a sitemap entry — hidden from the listing
+// but published to the web, which is the opposite of what the flag promises.
 export async function getStaticPaths() {
   const posts = await getCollection('blog');
-  return posts.map(post => ({
-    params: { slug: post.id },
-    props: { post },
-  }));
+  return posts
+    .filter(post => post.data.published)
+    .map(post => ({
+      params: { slug: post.id },
+      props: { post },
+    }));
 }
 
 const { post } = Astro.props;
