@@ -18,6 +18,7 @@ const { title, description = 'Personal site of David Hardage — data projects, 
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
     <link rel="sitemap" href="/sitemap-index.xml" />
+    <link rel="preload" href="/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin />
     <title>{title} | Feather</title>
     <script is:inline>
       const theme = (() => {
@@ -29,7 +30,7 @@ const { title, description = 'Personal site of David Hardage — data projects, 
       document.documentElement.classList.toggle('dark', theme === 'dark');
     </script>
   </head>
-  <body class="min-h-screen bg-cloud dark:bg-dark-bg transition-colors">
+  <body class="min-h-screen bg-well text-ink-body antialiased">
     <slot />
   </body>
 </html>

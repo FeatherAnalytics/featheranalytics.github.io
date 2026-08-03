@@ -10,9 +10,9 @@ const navLinks = [
 
 const currentPath = Astro.url.pathname;
 ---
-<nav class="sticky top-0 z-50 bg-surface/80 dark:bg-dark-surface/80 backdrop-blur-sm border-b border-border dark:border-dark-border">
+<nav class="sticky top-0 z-50 bg-paper/85 backdrop-blur-sm border-b border-rule">
   <div class="max-w-3xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-    <a href="/" class="text-navy dark:text-dark-text font-bold text-lg hover:text-link dark:hover:text-dark-link transition-colors">
+    <a href="/" class="font-display text-ink font-bold text-lg tracking-tight hover:text-accent transition-colors">
       FeatherAnalytics
     </a>
 
@@ -23,8 +23,8 @@ const currentPath = Astro.url.pathname;
           class:list={[
             'px-3 py-2 rounded-lg text-sm font-medium transition-colors hidden sm:block',
             currentPath.startsWith(link.href)
-              ? 'text-link dark:text-dark-link'
-              : 'text-text-secondary dark:text-dark-secondary hover:text-navy dark:hover:text-dark-text',
+              ? 'text-accent'
+              : 'text-ink-muted hover:text-ink',
           ]}
         >
           {link.text}
@@ -35,7 +35,7 @@ const currentPath = Astro.url.pathname;
         id="mobile-menu-btn"
         type="button"
         aria-label="Open menu"
-        class="sm:hidden p-2 rounded-lg text-text-secondary dark:text-dark-secondary hover:text-navy dark:hover:text-dark-text transition-colors"
+        class="sm:hidden p-2 rounded-lg text-ink-muted hover:text-ink transition-colors"
       >
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path d="M4 6h16M4 12h16M4 18h16" />
@@ -44,7 +44,7 @@ const currentPath = Astro.url.pathname;
     </div>
   </div>
 
-  <div id="mobile-menu" class="hidden sm:hidden border-t border-border dark:border-dark-border bg-surface dark:bg-dark-surface">
+  <div id="mobile-menu" class="hidden sm:hidden border-t border-rule bg-paper">
     <div class="px-4 py-2 space-y-1">
       {navLinks.map(link => (
         <a
@@ -52,8 +52,8 @@ const currentPath = Astro.url.pathname;
           class:list={[
             'block px-3 py-2 rounded-lg text-sm font-medium transition-colors',
             currentPath.startsWith(link.href)
-              ? 'text-link dark:text-dark-link'
-              : 'text-text-secondary dark:text-dark-secondary hover:text-navy dark:hover:text-dark-text',
+              ? 'text-accent'
+              : 'text-ink-muted hover:text-ink',
           ]}
         >
           {link.text}

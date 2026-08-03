@@ -16,14 +16,10 @@ const { title, subtitle, description } = Astro.props;
     <Nav />
     <main class="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 py-12">
       <header class="mb-8">
-        <h1 class="text-3xl sm:text-4xl font-bold text-navy dark:text-dark-text">{title}</h1>
-        {subtitle && <p class="mt-2 text-lg text-text-secondary dark:text-dark-secondary">{subtitle}</p>}
+        <h1 class="font-display text-3xl sm:text-4xl font-bold tracking-tight text-ink">{title}</h1>
+        {subtitle && <p class="mt-2 text-lg text-ink-muted">{subtitle}</p>}
       </header>
-      <div class="prose prose-slate dark:prose-invert max-w-none
-        prose-headings:text-navy dark:prose-headings:text-dark-text
-        prose-a:text-link dark:prose-a:text-dark-link
-        prose-code:bg-code-bg dark:prose-code:bg-dark-code-bg prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
-        prose-pre:bg-code-bg dark:prose-pre:bg-dark-code-bg">
+      <div class="prose max-w-none">
         <slot />
       </div>
     </main>
