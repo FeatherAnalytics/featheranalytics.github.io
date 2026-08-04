@@ -39,13 +39,7 @@
 /* The offset has to clear the site nav, which is `position: sticky` and measures
    65px in both layouts. At 4rem the panel lands 1px short of it and only escapes
    because the figure's own 1rem padding pushes the legend below the seam — which
-   breaks the moment that padding changes. 5rem clears the nav outright.
-
-   `padding-bottom` on the steps column is what keeps the panel pinned through
-   the final step. A sticky element cannot leave its containing block, so once
-   the column runs out of height the panel is dragged upward and slides behind
-   the nav — measured at 82–115px of the chart hidden before this existed. The
-   trailing room has to be at least as tall as the figure. */
+   breaks the moment that padding changes. 5rem clears the nav outright. */
 .scrolly-panel {
   position: sticky;
   top: 5rem;
@@ -53,8 +47,23 @@
   z-index: 1;
 }
 
+/* `padding-bottom` on the steps column is what keeps the panel pinned through
+   the final step: a sticky element can't move past the bottom of its own
+   containing block, so once the column runs out of height the panel gets
+   dragged upward and slides behind the nav.
+
+   Fixed px, not vh: the figure's height comes from the grid COLUMN's width
+   (which the viewport's WIDTH sets, via the aspect-ratio canvas plus a
+   roughly constant amount of legend/caption/control chrome), not from
+   viewport height, so tying this to vh is right only by coincidence at one
+   aspect ratio. Measured every panel across all four charts at both the
+   narrow stacked layout and the widest the column ever gets (this section
+   caps at 1120px total): the tallest was 701px, at 1440px wide. 900px
+   clears the tallest panel plus the 80px offset above with real margin,
+   and — since panel height only shrinks at other widths, never grows past
+   what the 1120px cap allows — the same fixed value covers every width. */
 .scrolly-steps {
-  padding-bottom: 40vh;
+  padding-bottom: 900px;
 }
 
 @media (min-width: 1024px) {
