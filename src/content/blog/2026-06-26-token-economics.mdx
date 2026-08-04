@@ -7,6 +7,87 @@ tags: [ai, economics]
 published: false
 ---
 
+{/*
+  ============================================================================
+  AUTHORING GUIDE — how to write the prose in this post
+  ============================================================================
+
+  The prose is not written. Every section carries an outline instead:
+
+      **Outline — replace with prose.**
+      - a bullet saying what to cover
+      - **Chart shows:** what is on screen at that step
+
+  Replace each outline block with real paragraphs. There are 24 of them.
+
+  WHERE THEY ARE (line numbers drift as you write — search for the marker
+  `Outline — replace with prose.` instead of trusting these):
+
+      Intro                      · 1 block
+      What a token costs         · 1 block
+      Producer Tradeoff (PPF)    · 4 blocks, one per ScrollyStep
+      Window x Quality           · 5 blocks
+      The cost floor             · 1 block
+      Budget Constraint          · 4 blocks
+      Jevons Paradox             · 5 blocks
+      Who supplies this          · 1 block
+      The Thread                 · 1 block
+      Where this breaks          · 1 block
+      Sources                    · already final, leave it alone
+
+  FOUR RULES
+
+  1. KEEP THE {FIGURES.x} REFERENCES. Every number that also appears in a
+     chart comes from `src/data/tokenomics.ts` and is interpolated, never
+     typed. That is what makes it impossible for a sentence to disagree with
+     the chart beside it. `publishedFigures.test.ts` enforces it: type
+     "$0.04" instead of {FIGURES.cheapestTier} and `npm test` fails. If you
+     need a figure that has no key yet, add it to FIGURES rather than typing
+     the digits here.
+
+  2. DELETE THE OUTLINE MARKER LINE as you replace each block. A test blocks
+     `published: true` while any marker remains, so an unfinished draft
+     cannot reach the web by accident.
+
+  3. DROP THE `Chart shows:` BULLET. It tells you what the reader is looking
+     at during that step so your prose can point at it. It is a note to the
+     author, not content.
+
+  4. KEEP <ScrollyStep> AND </ScrollyStep> AT COLUMN 0. Indent them under a
+     bullet list and markdown's lazy-continuation swallows them into the list
+     item, and the step silently stops existing.
+
+  A step's shape when you are done:
+
+      <ScrollyStep step={0}>
+
+      Your paragraphs. Prices ran from {FIGURES.startPrice} to
+      {FIGURES.endPrice} over the period.
+
+      </ScrollyStep>
+
+  ONE MORE MDX TRAP: do not start a `//` comment on its own line after a
+  blank line above the export block. MDX reads that chunk as a markdown
+  paragraph and silently swallows the `export const` lines after it — the
+  charts then fail at render with "x is not defined" and no build error.
+  Keep the import/export preamble contiguous.
+
+  WORKFLOW
+
+      set `published: true` in the frontmatter above
+      npm run dev        -> open /blog/2026-06-26-token-economics/
+      npm test           -> catches typed figures and leftover markers
+      npm run check      -> typecheck
+      npm run build      -> confirm it builds
+
+  Leave `published: true` while drafting so the route resolves. The tests are
+  the safety net for shipping, not the flag.
+
+  Design and implementation notes live in `docs/superpowers/` — that
+  directory is gitignored, so they exist only on the machine that wrote them.
+  ============================================================================
+*/}
+
 import ScrollySection from '../../components/scrolly/ScrollySection.astro';
 import ScrollyStep from '../../components/scrolly/ScrollyStep.astro';
 import ChartFigure from '../../components/scrolly/ChartFigure.astro';
