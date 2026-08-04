@@ -9,6 +9,12 @@
    the sticky panel inside and silently kills `position: sticky`. Negative
    margins do the same job with no side effect. */
 .scrolly {
+  /* Required, not decorative: a custom element has no default display, so
+     without this it inherits `inline` from its surrounding prose — and an
+     inline box ignores both `width` and horizontal margins. Without this
+     line the breakout below silently does nothing; the section renders at
+     the prose column's width instead of 1120px, and nobody sees an error. */
+  display: block;
   --scrolly-w: min(1120px, calc(100vw - 2rem));
   width: var(--scrolly-w);
   margin-inline: calc((100% - var(--scrolly-w)) / 2);
@@ -326,7 +332,15 @@
 }
 
 /* The hidden data table carries the real numbers for screen readers, and keeps
-   the post's "real data" claim honest by putting the values in the page. */
+   the post's "real data" claim honest by putting the values in the page.
+
+   This rule targets the wrapping div around the table, not the table itself:
+   a table's rendered box grows to fit its content regardless of `width`, so
+   `width: 1px` on a `<table>` clips nothing and still occupies its full
+   natural width in the document, which was pushing the whole page into
+   horizontal scroll. `display: block` on the table would fix that but strips
+   table semantics from assistive tech. A 1px absolutely-positioned wrapper
+   clips the table visually without changing what it is. */
 .chart-data {
   position: absolute;
   width: 1px;

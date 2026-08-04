@@ -97,7 +97,7 @@ export const jevonsTicks = decadeTicks(jevonsL.indexDomain);
 
 ## Producer Tradeoff (PPF)
 
-<ScrollySection chart="ppf" label="Producer tradeoff between price and provider-assigned tier">
+<ScrollySection chartKey="ppf" label="Producer tradeoff between price and provider-assigned tier">
   <ChartFigure
     slot="chart"
     ariaLabel={`Scatter of ${MODEL_TIERS.points.length} June 2026 models by input price and provider tier, with two measured SWE-bench cost anchors and a stylized production-possibility frontier a reader can shift with a compute-budget slider.`}
@@ -142,8 +142,15 @@ export const jevonsTicks = decadeTicks(jevonsL.indexDomain);
       <path data-live-path class="layer" data-steps="3" d={ppfInitial.path} fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="7 5" vector-effect="non-scaling-stroke" />
     </svg>
     <Fragment slot="labels">
+      {/*
+        Tier band names sit deep in the left margin (well below PLOT.x0=96,
+        the same margin geometry.ts reserves for an axis title), not just
+        outside the plot edge — at PLOT.x0-10 they still reached into the
+        leftmost model label's own width and collided with it. Right-anchored
+        so the text still reads toward the axis.
+      */}
       {ppfL.tierBands.map((b) => (
-        <span class="clabel" data-anchor="end" data-axis-title style={`left:${pct(PLOT.x0 - 10, VB.w)};top:${pct(b.y, VB.h)}`}>
+        <span class="clabel" data-anchor="end" data-axis-title style={`left:${pct(12, VB.w)};top:${pct(b.y, VB.h)}`}>
           {b.name}
         </span>
       ))}
@@ -152,11 +159,36 @@ export const jevonsTicks = decadeTicks(jevonsL.indexDomain);
           {`$${t < 1 ? t.toFixed(2) : t.toFixed(0)}`}
         </span>
       ))}
+      {/*
+        Models label ABOVE their point, anchors label BELOW theirs — a fixed
+        convention, not per-point nudging, so a reader can tell a model mark
+        from a SWE-bench anchor by position as well as by color (anchors are
+        already --accent against models' --chart-mark). An anchor and a model
+        sharing a tier band no longer land in the same row.
+      */}
+      {/*
+        Every model and anchor label carries data-dense: below the 520px
+        container-query threshold in scrolly.css they all drop out together,
+        leaving the tier names, price ticks, and circles — plus the full
+        numbers in the hidden accessible table. At full width none of this
+        applies; the query only fires on a genuinely narrow chart, per the
+        container's own comment. Measured live: at a 375px viewport the
+        chart's canvas is narrow enough that even the widest-spaced pair
+        (budget tier: Ministral 3B / Haiku 4, 496 units apart) collides once
+        fixed-size text takes up a bigger share of a smaller box — dense
+        hiding is the intended fallback for that, not per-point nudging.
+      */}
       {ppfL.models.map((m) => {
-        const dense = m.model === 'Gemini 3.1 Pro' || m.model === 'Opus 4';
-        const dy = m.model === 'Gemini 3.1 Pro' ? -10 : m.model === 'Opus 4' ? 10 : 0;
+        // The frontier-tier pair is only 141 viewBox units apart — the
+        // tightest pair on the chart — so it needs a real vertical split, not
+        // the ±10 that turned out to still overlap at rendered width. Both
+        // stay above their point (negative or zero dy): Opus at the standard
+        // above-point offset every other model uses, Gemini pushed well
+        // further up — flipping either of them below would collide with the
+        // anchor labels, which now live below their own points on purpose.
+        const dy = m.model === 'Gemini 3.1 Pro' ? -26 : 0;
         return (
-          <span class="clabel" data-dense={dense ? '' : null} style={`left:${pct(m.x, VB.w)};top:${pct(m.y + dy - 12, VB.h)}`}>
+          <span class="clabel" data-dense style={`left:${pct(m.x, VB.w)};top:${pct(m.y + dy - 14, VB.h)}`}>
             {m.label}
           </span>
         );
@@ -165,8 +197,9 @@ export const jevonsTicks = decadeTicks(jevonsL.indexDomain);
         <span
           class="clabel"
           data-accent
+          data-dense
           data-anchor={a.clamped ? 'end' : 'start'}
-          style={`left:${pct(a.x, VB.w)};top:${pct(a.y - 14, VB.h)}`}
+          style={`left:${pct(a.x, VB.w)};top:${pct(a.y + 16, VB.h)}`}
         >
           {a.clamped
             ? `$${a.usdPerMTok}/M at ${a.swePct}% — off-scale →`
@@ -234,7 +267,7 @@ export const jevonsTicks = decadeTicks(jevonsL.indexDomain);
 
 ## Window × Quality
 
-<ScrollySection chart="window-quality" label="Context window offered against accuracy retained, over time">
+<ScrollySection chartKey="window-quality" label="Context window offered against accuracy retained, over time">
   <ChartFigure
     slot="chart"
     ariaLabel={`Nine measured context-window releases from 2020 to 2026 against a flat measured typical-usage line, with a reader-driven readout of accuracy retention at any window size.`}
@@ -269,12 +302,30 @@ export const jevonsTicks = decadeTicks(jevonsL.indexDomain);
           {t >= 1_000_000 ? `${t / 1_000_000}M` : `${t / 1000}K`}
         </span>
       ))}
-      {wqL.offered.map((p) => (
-        <span class="clabel" style={`left:${pct(p.x, VB.w)};top:${pct(p.y - 12, VB.h)}`}>
-          {p.model}
-        </span>
-      ))}
-      <span class="clabel" data-emphasis data-anchor="start" style={`left:${pct(PLOT.x1 - 140, VB.w)};top:${pct(wqL.usedLine.y - 12, VB.h)}`}>
+      {wqL.offered.map((p) => {
+        // Claude 2, GPT-4 Turbo, and Claude 3 land within ten months of each
+        // other in both date and window size — close enough in x and y that
+        // no single shared offset (tried ±20, then alternating by array
+        // order) cleared every pair without creating a new one elsewhere.
+        // Measured live and staggered by name into three explicit tiers
+        // instead of a formula, since the three points' natural spacing
+        // isn't even. Every other point clears at the standard offset.
+        const dy = { 'GPT-4 Turbo': -20, 'Claude 3': -40 }[p.model] ?? 0;
+        return (
+          <span class="clabel" style={`left:${pct(p.x, VB.w)};top:${pct(p.y + dy - 12, VB.h)}`}>
+            {p.model}
+          </span>
+        );
+      })}
+      {/*
+        anchor="end" at PLOT.x1, not "start" partway across: this label's
+        text is wider than the margin between the plot's right edge and the
+        container's, so anchoring it to extend rightward pushed a few px past
+        the chart's own box at narrower viewports and reopened the document's
+        horizontal scrollbar. Anchoring it to extend leftward, into the plot
+        area where there's room, keeps it inside the box at every width.
+      */}
+      <span class="clabel" data-emphasis data-anchor="end" style={`left:${pct(PLOT.x1, VB.w)};top:${pct(wqL.usedLine.y - 12, VB.h)}`}>
         {`~${FIGURES.typicalUsage} typical session`}
       </span>
     </Fragment>
@@ -358,7 +409,7 @@ export const jevonsTicks = decadeTicks(jevonsL.indexDomain);
 
 ## Budget Constraint
 
-<ScrollySection chart="budget" label="Measured token price decline against other metered-resource decline rates">
+<ScrollySection chartKey="budget" label="Measured token price decline against other metered-resource decline rates">
   <ChartFigure
     slot="chart"
     ariaLabel={`Measured cheapest-available token price from 2023 to 2026 on a log scale, against comparison trajectories for other metered computing resources at their own real annual decline rates, toggled one at a time.`}
@@ -463,7 +514,7 @@ export const jevonsTicks = decadeTicks(jevonsL.indexDomain);
 
 ## Jevons Paradox
 
-<ScrollySection chart="jevons" label="Price and revenue index diverging, with the agent-consumption ladder underneath">
+<ScrollySection chartKey="jevons" label="Price and revenue index diverging, with the agent-consumption ladder underneath">
   <ChartFigure
     slot="chart"
     ariaLabel={`A price index falling and a revenue index rising over the same period — the measured divergence — with a bar ladder of agent-pattern token multipliers underneath, and a reader-chosen elasticity driving a live total-spending curve.`}
@@ -502,10 +553,16 @@ export const jevonsTicks = decadeTicks(jevonsL.indexDomain);
           {t < 1 ? t.toFixed(2) : t.toFixed(0)}
         </span>
       ))}
-      <span class="clabel" data-emphasis style={`left:${pct(PLOT.x0 + 40, VB.w)};top:${pct(jevonsYScale(jevonsL.priceIndex) - 12, VB.h)}`}>
+      {/*
+        data-anchor="start" here is load-bearing, not cosmetic: the default
+        centered anchor made this long label extend leftward from x0+40 far
+        enough to reach into the y-axis tick labels at x0-8 and collide with
+        "0.10". Anchoring start keeps all of the text to the right of its x.
+      */}
+      <span class="clabel" data-emphasis data-anchor="start" style={`left:${pct(PLOT.x0 + 40, VB.w)};top:${pct(jevonsYScale(jevonsL.priceIndex) - 12, VB.h)}`}>
         {`price index, ${FIGURES.priceDrop} down`}
       </span>
-      <span class="clabel" data-accent style={`left:${pct(PLOT.x0 + 40, VB.w)};top:${pct(jevonsYScale(jevonsL.revenueIndex) - 12, VB.h)}`}>
+      <span class="clabel" data-accent data-anchor="start" style={`left:${pct(PLOT.x0 + 40, VB.w)};top:${pct(jevonsYScale(jevonsL.revenueIndex) - 12, VB.h)}`}>
         {`revenue index, ${FIGURES.revenueGrowth}`}
       </span>
       {jevonsL.ladder.map((r) => (
