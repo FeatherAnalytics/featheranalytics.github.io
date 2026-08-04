@@ -9,9 +9,20 @@ interface Props {
   readout: string;
   /** Extra guidance, announced with the slider. */
   hint?: string;
+  /**
+   * Renders a position slider (min/max/step/value stay in position space,
+   * conventionally 0–100) that scrolly.ts maps log-uniformly onto
+   * [logMin, logMax] before calling the chart's recompute. Use for a
+   * quantity spanning several orders of magnitude — a linear slider over
+   * such a range spends nearly all its travel in the top decade.
+   */
+  logScale?: boolean;
+  /** Real domain endpoints the position maps onto. Required when logScale is set. */
+  logMin?: number;
+  logMax?: number;
 }
 
-const { label, min, max, step, value, readout, hint } = Astro.props;
+const { label, min, max, step, value, readout, hint, logScale, logMin, logMax } = Astro.props;
 const id = `rc-${Math.random().toString(36).slice(2, 9)}`;
 ---
 <div class="chart-control">
@@ -24,6 +35,9 @@ const id = `rc-${Math.random().toString(36).slice(2, 9)}`;
     step={step}
     value={value}
     data-control
+    data-log-scale={logScale ? '' : null}
+    data-log-min={logScale ? logMin : null}
+    data-log-max={logScale ? logMax : null}
     aria-describedby={`${id}-out`}
   />
   <p class="chart-readout" id={`${id}-out`} data-readout aria-live="polite">{readout}</p>

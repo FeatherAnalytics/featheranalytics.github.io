@@ -21,6 +21,25 @@ const CHARTS: Record<string, Recompute> = {
   jevons,
 };
 
+/**
+ * Position-to-real-value mapping for a log-scale slider.
+ *
+ * A linear range over 8K–2M tokens stepping by 1,000 gives 1,992 positions,
+ * of which 1,800 (90.4%) fall in the single top decade (200K–2M) — where a
+ * thousand-token step is invisible against a log axis. Mapping the input's
+ * position log-uniformly instead spreads perceptible change evenly across
+ * the whole control. `Math.log10`/`10 **` directly, not `scale.ts`'s
+ * `log10` — that helper maps onto a pixel range and throws on non-positive
+ * domains, which is chart geometry, not UI position mapping.
+ */
+function mapLogPosition(position: number, posMin: number, posMax: number, realMin: number, realMax: number): number {
+  const t = (position - posMin) / (posMax - posMin);
+  if (t <= 0) return realMin;
+  if (t >= 1) return realMax;
+  const value = 10 ** (Math.log10(realMin) + t * (Math.log10(realMax) - Math.log10(realMin)));
+  return Math.round(value);
+}
+
 class ScrollySection extends HTMLElement {
   private steps: HTMLElement[] = [];
   private observer?: IntersectionObserver;
@@ -82,8 +101,15 @@ class ScrollySection extends HTMLElement {
     const last = this.steps.length - 1;
 
     if (input) {
+      const isLog = input.dataset.logScale !== undefined;
+      const logMin = Number(input.dataset.logMin);
+      const logMax = Number(input.dataset.logMax);
       const apply = () => {
-        const { path, readout: text } = fn(Number(input.value));
+        const raw = Number(input.value);
+        const chartValue = isLog
+          ? mapLogPosition(raw, Number(input.min), Number(input.max), logMin, logMax)
+          : raw;
+        const { path, readout: text } = fn(chartValue);
         if (path && target) target.setAttribute('d', path);
         if (readout) readout.textContent = text;
       };
