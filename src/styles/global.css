@@ -57,6 +57,13 @@
   --accent-hover: #8f0c1a;
   --code-bg: #eae7dd;
   --selection: #f3d6da;
+  /* Chart chrome, deliberately darker than `--rule`. A hairline sized for a
+     divider is too faint for a gridline, and a mark at gridline tone disappears
+     against the card while any label sitting on it falls near 1.6:1. Measured on
+     the cinemetrics charts, where both failures happened. */
+  --chart-grid: #b3b1a6;
+  --chart-axis: #7c7a71;
+  --chart-mark: #b3b1a6;
   color-scheme: light;
 }
 
@@ -74,6 +81,9 @@ html.dark {
   --accent-hover: #ff7a85;
   --code-bg: #21201b;
   --selection: #5c1620;
+  --chart-grid: #3a3833;
+  --chart-axis: #5c5a53;
+  --chart-mark: #78746a;
   color-scheme: dark;
 }
 
@@ -94,6 +104,9 @@ html.dark {
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
   --color-code-bg: var(--code-bg);
+  --color-chart-grid: var(--chart-grid);
+  --color-chart-axis: var(--chart-axis);
+  --color-chart-mark: var(--chart-mark);
 }
 
 html {
