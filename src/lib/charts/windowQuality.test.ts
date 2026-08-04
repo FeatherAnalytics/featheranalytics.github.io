@@ -42,4 +42,17 @@ describe('recompute', () => {
       expect(recompute(v).readout).not.toMatch(/NaN/);
     }
   });
+
+  it('refuses a utilization percentage when the window is smaller than a typical session', () => {
+    const { readout } = recompute(4_000);
+    expect(readout).not.toContain('% of it'); // no utilization figure at all, over or under 100
+    expect(readout.toLowerCase()).toMatch(/not fit|overflow/);
+  });
+
+  it('still reports utilization once the window reaches or exceeds a typical session', () => {
+    for (const tokens of [8_000, 2_000_000]) {
+      const { readout } = recompute(tokens);
+      expect(readout).toMatch(/uses \d/);
+    }
+  });
 });

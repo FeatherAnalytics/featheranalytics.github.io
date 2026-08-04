@@ -58,7 +58,24 @@ export function recompute(tokens: number): { readout: string } {
   const retention = interpolateRetention(tokens);
   const pct = Math.round(retention * 100);
   const k = tokens >= 1_000_000 ? `${(tokens / 1_000_000).toFixed(1)}M` : `${Math.round(tokens / 1000)}K`;
-  const util = ((UTILIZATION.points[0].used / tokens) * 100).toFixed(1);
+  const used = UTILIZATION.points[0].used;
+
+  // "Utilization" is the ratio of two independently measured quantities, and
+  // that ratio is only meaningful in one direction: a typical session using
+  // less of a larger window. Below `used`, the honest statement is that the
+  // session does not fit — not a percentage over 100, and not one clamped
+  // down to hide that it doesn't.
+  if (tokens < used) {
+    const usedK = Math.round(used / 1000);
+    return {
+      readout:
+        `At a ${k} window: about ${pct}% accuracy retained, interpolated between the ` +
+        `measured 10K and 100K anchors. A typical ${usedK}K session would not fit in a ` +
+        `window this small.`,
+    };
+  }
+
+  const util = ((used / tokens) * 100).toFixed(1);
   return {
     readout:
       `At a ${k} window: about ${pct}% accuracy retained, interpolated between the ` +
