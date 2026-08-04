@@ -65,7 +65,7 @@ export const DECLINE_COMPARISON = {
  * mid-2026.
  */
 export const WINDOW_TIMELINE = {
-  source: 'Research doc 05 "Window-Quality Equilibrium", section 1 — window expansion table',
+  source: 'Research doc 05 "The Window-Quality Equilibrium", section 1 — window expansion table',
   points: [
     { date: '2020-06', model: 'GPT-3', tokens: 2_000 },
     { date: '2022-11', model: 'ChatGPT', tokens: 8_000 },
@@ -80,7 +80,7 @@ export const WINDOW_TIMELINE = {
 } as const;
 
 export const UTILIZATION = {
-  source: 'Research doc 05, section 6 — context slack table',
+  source: 'Research doc 05 "The Window-Quality Equilibrium", section 6 — context slack table',
   note: 'Average usage is roughly 6K tokens regardless of the window offered.',
   points: [
     { window: 128_000, used: 6_000, pct: 4.7 },
@@ -98,7 +98,7 @@ export const UTILIZATION = {
  * midpoint is the finding.
  */
 export const DEGRADATION = {
-  source: 'Research doc 05, section 3 — Chroma 2025 (18 models); Liu et al. 2023',
+  source: 'Research doc 05 "The Window-Quality Equilibrium", section 3 — Chroma 2025 (18 models); Liu et al. 2023',
   dropRange: '20–50%',
   liuDropPoints: '15–25 percentage points',
   points: [
@@ -119,7 +119,8 @@ export const DEGRADATION = {
  * chart's y-axis is labeled "provider tier" and carries no numeric ticks.
  */
 export const MODEL_TIERS = {
-  source: 'Research doc 01, section 4 — rate cards; doc 03, section 4 — tiers as PPF positions',
+  source:
+    'Research doc 01 "Tokens as a Scarce Resource", section 4 — rate cards; doc 03 "The Production Possibility Frontier", section 4 — tiers as PPF positions',
   points: [
     // contextK: null — no document in the corpus states a context window for
     // Ministral 3B (doc 01 §4's budget rate card gives price only; doc 03 §4's
@@ -144,7 +145,7 @@ export const MODEL_TIERS = {
  * sets should not be plotted together as one curve.
  */
 export const QUALITY_COST = {
-  source: 'Research doc 00 "Consolidated Summary", section 3, finding 3 — SWE-bench cost curve',
+  source: 'Research doc 00 "LLM Token Economics: Consolidated Summary", section 3, finding 3 — SWE-bench cost curve',
   points: [
     { swePct: 80, usdPerMTok: 1 },
     { swePct: 95, usdPerMTok: 50 },
@@ -154,7 +155,7 @@ export const QUALITY_COST = {
 // ------------------------------------------------------------------- Jevons
 
 export const AGENT_MULTIPLIER = {
-  source: 'Research doc 06 "Jevons Paradox", section 4 — agent consumption table',
+  source: 'Research doc 06 "Jevons Paradox and the Token Demand Spiral", section 4 — agent consumption table',
   points: [
     { pattern: 'Single prompt', tokens: '1K–3K', mult: 1 },
     { pattern: '5-step agent loop', tokens: '10K–15K', mult: 5 },
@@ -165,7 +166,8 @@ export const AGENT_MULTIPLIER = {
 } as const;
 
 export const JEVONS = {
-  source: 'Research doc 06, section 5 — revenue against price; doc 00 finding 2',
+  source:
+    'Research doc 06 "Jevons Paradox and the Token Demand Spiral", section 5 — revenue against price; doc 00 "LLM Token Economics: Consolidated Summary", finding 2',
   priceDropFraction: 0.95,
   revenueGrowthMin: 20,
   revenueGrowthMax: 30,
@@ -188,7 +190,8 @@ export const JEVONS = {
 // --------------------------------------------------------- grounding sections
 
 export const COST_FLOOR = {
-  source: 'Research doc 01 "Tokens as a Scarce Resource", section 5 — floor dollar figures; doc 02 "Cost Structure", section 9 — the physical framing',
+  source:
+    'Research doc 01 "Tokens as a Scarce Resource", section 5 — floor dollar figures; doc 02 "The Cost Structure of a Token", section 9 — the physical framing',
   budgetFloorLow: 0.01,
   budgetFloorHigh: 0.03,
   frontierStableLow: 2,
@@ -200,7 +203,8 @@ export const COST_FLOOR = {
 // Llama 4 Maverick $0.10-$3.00 spread) is doc 02 §7, not doc 07 — doc 07 §7
 // states the lag figure only and carries no hosting-spread number.
 export const SUPPLY_SIDE = {
-  source: 'Research doc 07 "Supply-Side Economics", sections 2, 4, 6, 7; doc 02 "Cost Structure", section 7',
+  source:
+    'Research doc 07 "Supply-Side Economics of the Token Market", sections 2, 4, 6, 7; doc 02 "The Cost Structure of a Token", section 7',
   capex2026UsdBn: 620,
   anthropicEnterpriseApiSharePct: 32,
   chatgptConsumerSharePct: 74,
@@ -222,6 +226,9 @@ export const SUPPLY_SIDE = {
  * with.
  */
 export function impliedVolumeGrowth(priceDropFraction: number, revenueGrowth: number): number {
+  if (priceDropFraction >= 1) {
+    throw new Error(`impliedVolumeGrowth: priceDropFraction must be less than 1, got ${priceDropFraction}`);
+  }
   return revenueGrowth / (1 - priceDropFraction);
 }
 
@@ -233,6 +240,12 @@ export function impliedVolumeGrowth(priceDropFraction: number, revenueGrowth: nu
  * where revenue holds flat.
  */
 export function impliedElasticity(priceDropFraction: number, revenueGrowth: number): number {
+  if (priceDropFraction >= 1) {
+    throw new Error(`impliedElasticity: priceDropFraction must be less than 1, got ${priceDropFraction}`);
+  }
+  if (revenueGrowth <= 0) {
+    throw new Error(`impliedElasticity: revenueGrowth must be positive, got ${revenueGrowth}`);
+  }
   const priceRatio = 1 - priceDropFraction;
   return Math.log(impliedVolumeGrowth(priceDropFraction, revenueGrowth)) / Math.log(priceRatio);
 }
@@ -243,9 +256,28 @@ export function impliedElasticity(priceDropFraction: number, revenueGrowth: numb
  *
  * Clamped rather than extrapolated on purpose: the study measured 10K and 100K,
  * so a curve continuing past 1M would be this chart inventing evidence.
+ *
+ * This is called from the browser as a reader drags chart 2's slider, with
+ * arbitrary token values — unlike FIGURES, its inputs are not fixed at build
+ * time, so a NaN here would silently void an SVG attribute rather than fail
+ * a test. It throws instead of returning one.
  */
 export function interpolateRetention(tokens: number): number {
+  if (tokens <= 0) {
+    throw new Error(`interpolateRetention: tokens must be positive, got ${tokens}`);
+  }
+  // Asserted rather than left as a comment: a third anchor added to
+  // DEGRADATION later would otherwise be silently ignored by the destructure
+  // below, the same class of silent failure this guard pass exists to close.
+  if (DEGRADATION.points.length !== 2) {
+    throw new Error(
+      `interpolateRetention: expected exactly two DEGRADATION anchors, got ${DEGRADATION.points.length}`,
+    );
+  }
   const [a, b] = DEGRADATION.points;
+  if (a.tokens === b.tokens) {
+    throw new Error(`interpolateRetention: anchors must have distinct tokens, both are ${a.tokens}`);
+  }
   const t = (Math.log10(tokens) - Math.log10(a.tokens)) / (Math.log10(b.tokens) - Math.log10(a.tokens));
   const clamped = Math.min(1, Math.max(0, t));
   return a.retention + (b.retention - a.retention) * clamped;

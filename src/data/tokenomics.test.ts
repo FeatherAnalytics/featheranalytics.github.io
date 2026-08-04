@@ -90,6 +90,11 @@ describe('impliedVolumeGrowth', () => {
     // Price falls to 5% of its start, revenue grows 25x -> volume grows 500x.
     expect(impliedVolumeGrowth(0.95, 25)).toBeCloseTo(500, 6);
   });
+
+  it('rejects a priceDropFraction of 1 or more, which divides by zero or less', () => {
+    expect(() => impliedVolumeGrowth(1, 25)).toThrow(/priceDropFraction/);
+    expect(() => impliedVolumeGrowth(1.5, 25)).toThrow(/priceDropFraction/);
+  });
 });
 
 describe('impliedElasticity', () => {
@@ -101,6 +106,16 @@ describe('impliedElasticity', () => {
 
   it('returns exactly -1 when revenue is flat, the break-even case', () => {
     expect(impliedElasticity(0.95, 1)).toBeCloseTo(-1, 6);
+  });
+
+  it('rejects a priceDropFraction of 1 or more, which has no finite elasticity', () => {
+    expect(() => impliedElasticity(1, 25)).toThrow(/priceDropFraction/);
+    expect(() => impliedElasticity(1.5, 25)).toThrow(/priceDropFraction/);
+  });
+
+  it('rejects a non-positive revenueGrowth, whose log is undefined', () => {
+    expect(() => impliedElasticity(0.95, 0)).toThrow(/revenueGrowth/);
+    expect(() => impliedElasticity(0.95, -1)).toThrow(/revenueGrowth/);
   });
 });
 
@@ -119,6 +134,38 @@ describe('interpolateRetention', () => {
   it('clamps outside the measured span rather than extrapolating', () => {
     expect(interpolateRetention(1_000)).toBeCloseTo(DEGRADATION.points[0].retention, 6);
     expect(interpolateRetention(1_000_000)).toBeCloseTo(DEGRADATION.points[1].retention, 6);
+  });
+
+  it('rejects a non-positive tokens argument, which has no logarithm', () => {
+    expect(() => interpolateRetention(0)).toThrow(/tokens/);
+    expect(() => interpolateRetention(-1)).toThrow(/tokens/);
+  });
+
+  it('rejects anchors that share a tokens value, which divides by zero', () => {
+    // DEGRADATION is fixed corpus data (10K and 100K, always distinct), so this
+    // exercises the guard against a future edit rather than real data. Mutate
+    // the shared points array for one assertion, then restore it exactly.
+    const points = DEGRADATION.points as unknown as { tokens: number; retention: number }[];
+    const originalSecond = points[1];
+    points[1] = { tokens: points[0].tokens, retention: originalSecond.retention };
+    try {
+      expect(() => interpolateRetention(50_000)).toThrow(/distinct/);
+    } finally {
+      points[1] = originalSecond;
+    }
+  });
+
+  it('rejects a DEGRADATION series that does not have exactly two anchors', () => {
+    // A third anchor added later would otherwise be silently ignored by the
+    // `const [a, b] = DEGRADATION.points` destructure this function relies on.
+    const points = DEGRADATION.points as unknown as { tokens: number; retention: number }[];
+    const originalLength = points.length;
+    points.push({ tokens: 1_000_000, retention: 0.4 });
+    try {
+      expect(() => interpolateRetention(50_000)).toThrow(/two/);
+    } finally {
+      points.length = originalLength;
+    }
   });
 });
 
