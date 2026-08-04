@@ -36,16 +36,29 @@
   }
 }
 
+/* The offset has to clear the site nav, which is `position: sticky` and measures
+   65px in both layouts. At 4rem the panel lands 1px short of it and only escapes
+   because the figure's own 1rem padding pushes the legend below the seam — which
+   breaks the moment that padding changes. 5rem clears the nav outright.
+
+   `padding-bottom` on the steps column is what keeps the panel pinned through
+   the final step. A sticky element cannot leave its containing block, so once
+   the column runs out of height the panel is dragged upward and slides behind
+   the nav — measured at 82–115px of the chart hidden before this existed. The
+   trailing room has to be at least as tall as the figure. */
 .scrolly-panel {
   position: sticky;
-  top: 1rem;
+  top: 5rem;
   align-self: start;
   z-index: 1;
 }
 
+.scrolly-steps {
+  padding-bottom: 40vh;
+}
+
 @media (min-width: 1024px) {
   .scrolly-panel {
-    top: 4rem;
     order: 2;
   }
   .scrolly-steps {
