@@ -14,18 +14,26 @@
 
 // ---------------------------------------------------------------- price decline
 
+/**
+ * `datePrecision` distinguishes a month the corpus actually states from one
+ * this module inferred so the series would have a sortable date. Doc 01 §5's
+ * table gives "Late 2023" and "2026" for two rows with no month named — those
+ * two are `'inferred'`. Every chart or caption that plots these points must
+ * disclose the inferred ones rather than presenting them as measured to the
+ * month.
+ */
 export const PRICE_DECLINE = {
   source: 'Research doc 01 "Tokens as a Scarce Resource", section 5 — deflation table',
   note: 'Cheapest input price per million tokens at or above GPT-4-class capability.',
   points: [
-    { date: '2023-03', label: 'GPT-4', usd: 30.0 },
-    { date: '2023-11', label: 'GPT-4 Turbo', usd: 10.0 },
-    { date: '2024-05', label: 'GPT-4o', usd: 5.0 },
-    { date: '2024-07', label: 'GPT-4o Mini', usd: 0.15 },
-    { date: '2024-12', label: 'DeepSeek V3', usd: 0.27 },
-    { date: '2025-01', label: 'DeepSeek R1', usd: 0.55 },
-    { date: '2026-01', label: 'DeepSeek V3.2', usd: 0.14 },
-    { date: '2026-06', label: 'Ministral 3B', usd: 0.04 },
+    { date: '2023-03', label: 'GPT-4', usd: 30.0, datePrecision: 'stated' },
+    { date: '2023-11', label: 'GPT-4 Turbo', usd: 10.0, datePrecision: 'inferred' },
+    { date: '2024-05', label: 'GPT-4o', usd: 5.0, datePrecision: 'stated' },
+    { date: '2024-07', label: 'GPT-4o Mini', usd: 0.15, datePrecision: 'stated' },
+    { date: '2024-12', label: 'DeepSeek V3', usd: 0.27, datePrecision: 'stated' },
+    { date: '2025-01', label: 'DeepSeek R1', usd: 0.55, datePrecision: 'stated' },
+    { date: '2026-01', label: 'DeepSeek V3.2', usd: 0.14, datePrecision: 'inferred' },
+    { date: '2026-06', label: 'Ministral 3B', usd: 0.04, datePrecision: 'stated' },
   ],
 } as const;
 
@@ -42,10 +50,24 @@ export const DECLINE_COMPARISON = {
 
 // -------------------------------------------------------------- context windows
 
+/**
+ * The corpus's own headline for this table is "roughly 1,000x growth... from
+ * 2K tokens to 2M" (doc 05 §1), so the endpoints here are chosen to reproduce
+ * that framing rather than an arbitrary pair: GPT-3's row is stated as
+ * "2K-4K tokens" and takes the 2K lower bound; Gemini 3.1 Pro closes the
+ * series at the 2M doc 05 §5 says it advertises (MODEL_TIERS agrees, at
+ * `contextK: 2_000`).
+ *
+ * Doc 05 §5 also names a model that "claims" a 10M window (Gemini 3), but
+ * never states it shipped generally available — only "advertises" / "claims"
+ * language, versus "GA" for the other rows. Excluded on that basis: plotting
+ * it would put growth at 5,000x and overstate what a developer could use in
+ * mid-2026.
+ */
 export const WINDOW_TIMELINE = {
   source: 'Research doc 05 "Window-Quality Equilibrium", section 1 — window expansion table',
   points: [
-    { date: '2020-06', model: 'GPT-3', tokens: 4_000 },
+    { date: '2020-06', model: 'GPT-3', tokens: 2_000 },
     { date: '2022-11', model: 'ChatGPT', tokens: 8_000 },
     { date: '2023-03', model: 'GPT-4', tokens: 32_000 },
     { date: '2023-05', model: 'Claude 2', tokens: 100_000 },
@@ -53,6 +75,7 @@ export const WINDOW_TIMELINE = {
     { date: '2024-02', model: 'Gemini 1.5 Pro', tokens: 1_000_000 },
     { date: '2024-03', model: 'Claude 3', tokens: 200_000 },
     { date: '2026-02', model: 'Claude Opus 4', tokens: 1_000_000 },
+    { date: '2026-06', model: 'Gemini 3.1 Pro', tokens: 2_000_000 },
   ],
 } as const;
 
@@ -98,7 +121,12 @@ export const DEGRADATION = {
 export const MODEL_TIERS = {
   source: 'Research doc 01, section 4 — rate cards; doc 03, section 4 — tiers as PPF positions',
   points: [
-    { model: 'Ministral 3B', provider: 'Mistral', usdIn: 0.04, contextK: 128, tier: 1 },
+    // contextK: null — no document in the corpus states a context window for
+    // Ministral 3B (doc 01 §4's budget rate card gives price only; doc 03 §4's
+    // tier tables cover Anthropic, OpenAI and Google only). The gap is
+    // deliberate: a table or chart rendering this field must show something
+    // like "not stated" here, never a number.
+    { model: 'Ministral 3B', provider: 'Mistral', usdIn: 0.04, contextK: null, tier: 1 },
     { model: 'Haiku 4', provider: 'Anthropic', usdIn: 1.0, contextK: 200, tier: 1 },
     { model: 'Gemini 3.1 Pro', provider: 'Google', usdIn: 2.0, contextK: 2_000, tier: 3 },
     { model: 'Sonnet 4', provider: 'Anthropic', usdIn: 3.0, contextK: 1_000, tier: 2 },
@@ -106,9 +134,17 @@ export const MODEL_TIERS = {
   ],
 } as const;
 
-/** The two real points that establish the frontier's concavity. */
+/**
+ * The two real points that establish the frontier's concavity.
+ *
+ * Doc 03 §4 separately reports per-model SWE-bench figures on the same output-
+ * token basis — Opus 4 at 88.6% for $25/M output, DeepSeek V4 Pro Max at 80.6%
+ * for $0.87/M — but those are a different, specific model pair at different
+ * quality thresholds. They are not a contradiction of the pair below; the two
+ * sets should not be plotted together as one curve.
+ */
 export const QUALITY_COST = {
-  source: 'Research doc 03, section 2 — SWE-bench cost curve',
+  source: 'Research doc 00 "Consolidated Summary", section 3, finding 3 — SWE-bench cost curve',
   points: [
     { swePct: 80, usdPerMTok: 1 },
     { swePct: 95, usdPerMTok: 50 },
@@ -152,7 +188,7 @@ export const JEVONS = {
 // --------------------------------------------------------- grounding sections
 
 export const COST_FLOOR = {
-  source: 'Research doc 02 "Cost Structure", section 7 — the physical floor',
+  source: 'Research doc 01 "Tokens as a Scarce Resource", section 5 — floor dollar figures; doc 02 "Cost Structure", section 9 — the physical framing',
   budgetFloorLow: 0.01,
   budgetFloorHigh: 0.03,
   frontierStableLow: 2,
@@ -160,8 +196,11 @@ export const COST_FLOOR = {
   note: 'A token requires loading weights from memory, multiplying matrices, and writing results back. The floor is thermodynamic, not notional.',
 } as const;
 
+// `openWeightLagMonths` is doc 07 §7. `hostingSpreadForIdenticalWeights` (the
+// Llama 4 Maverick $0.10-$3.00 spread) is doc 02 §7, not doc 07 — doc 07 §7
+// states the lag figure only and carries no hosting-spread number.
 export const SUPPLY_SIDE = {
-  source: 'Research doc 07 "Supply-Side Economics", sections 2, 4, 6',
+  source: 'Research doc 07 "Supply-Side Economics", sections 2, 4, 6, 7; doc 02 "Cost Structure", section 7',
   capex2026UsdBn: 620,
   anthropicEnterpriseApiSharePct: 32,
   chatgptConsumerSharePct: 74,
@@ -239,7 +278,7 @@ export const FIGURES = {
   agentTopMultiplier: `${AGENT_MULTIPLIER.points.at(-1)!.mult.toLocaleString('en-US')}×`,
   priceDrop: `${round(JEVONS.priceDropFraction * 100)}%`,
   revenueGrowth: `${JEVONS.revenueGrowthMin}–${JEVONS.revenueGrowthMax}×`,
-  impliedVolume: JEVONS.statedVolumeGrowth,
+  statedVolume: JEVONS.statedVolumeGrowth,
   impliedElasticity: impliedElasticity(
     JEVONS.priceDropFraction,
     (JEVONS.revenueGrowthMin + JEVONS.revenueGrowthMax) / 2,

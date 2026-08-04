@@ -52,6 +52,16 @@ describe('dated series', () => {
   });
 });
 
+describe('PRICE_DECLINE date precision', () => {
+  it('marks only the rows the corpus never gave a month for as inferred', () => {
+    // Doc 01 §5's table states "Late 2023" and "2026" with no month for these
+    // two rows only. A future edit that silently marks another row inferred
+    // (or un-marks one of these) should fail here.
+    const inferred = PRICE_DECLINE.points.filter((p) => p.datePrecision === 'inferred').map((p) => p.label);
+    expect(inferred).toEqual(['GPT-4 Turbo', 'DeepSeek V3.2']);
+  });
+});
+
 describe('price decline', () => {
   it('starts at the GPT-4 launch price and reaches the cheapest 2026 model', () => {
     expect(PRICE_DECLINE.points[0]).toMatchObject({ label: 'GPT-4', usd: 30 });
