@@ -19,6 +19,7 @@ docs/
 # Claude
 .claude/
 CLAUDE.md
+.superpowers/
 
 # rtk
 .rtk/
