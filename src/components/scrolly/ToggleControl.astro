@@ -1,0 +1,30 @@
+---
+interface Props {
+  label: string;
+  options: { value: string; text: string }[];
+  /** Value selected on load. */
+  selected: string;
+  readout: string;
+}
+
+const { label, options, selected, readout } = Astro.props;
+const name = `tc-${Math.random().toString(36).slice(2, 9)}`;
+---
+<div class="chart-control">
+  <span class="chart-control-label" id={`${name}-label`}>{label}</span>
+  <div class="chart-toggle" role="radiogroup" aria-labelledby={`${name}-label`}>
+    {options.map((o) => (
+      <label>
+        <input
+          type="radio"
+          name={name}
+          value={o.value}
+          checked={o.value === selected}
+          data-control-radio
+        />
+        <span>{o.text}</span>
+      </label>
+    ))}
+  </div>
+  <p class="chart-readout" data-readout aria-live="polite">{readout}</p>
+</div>

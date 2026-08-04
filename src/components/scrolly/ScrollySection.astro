@@ -1,0 +1,26 @@
+---
+import '../../styles/scrolly.css';
+
+interface Props {
+  /** Key into the chart registry in scrolly.ts. */
+  chart: 'ppf' | 'window-quality' | 'budget' | 'jevons';
+  /** Accessible name for the section landmark. */
+  label: string;
+}
+
+const { chart, label } = Astro.props;
+---
+<scrolly-section class="scrolly not-prose" data-chart={chart} aria-label={label}>
+  <div class="scrolly-grid">
+    <div class="scrolly-panel">
+      <slot name="chart" />
+    </div>
+    <div class="scrolly-steps">
+      <slot />
+    </div>
+  </div>
+</scrolly-section>
+
+<script>
+  import '../../scripts/scrolly';
+</script>

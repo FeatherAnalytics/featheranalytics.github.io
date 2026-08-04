@@ -1,0 +1,55 @@
+---
+interface LegendItem {
+  kind: 'measured' | 'stylized' | 'chrome';
+  text: string;
+}
+
+interface Props {
+  /** Stated to a screen reader in place of the chart. Include the finding. */
+  ariaLabel: string;
+  caption: string;
+  takeaway: string;
+  legend: LegendItem[];
+  /** Accessible table of the real values. Header row first. */
+  table: { caption: string; head: string[]; rows: string[][] };
+}
+
+const { ariaLabel, caption, takeaway, legend, table } = Astro.props;
+---
+<figure class="chart-figure">
+  <div class="chart-legend">
+    {legend.map((l) => (
+      <span>
+        <i
+          data-measured={l.kind === 'measured' ? '' : null}
+          data-stylized={l.kind === 'stylized' ? '' : null}
+          data-chrome={l.kind === 'chrome' ? '' : null}
+        />
+        {l.text}
+      </span>
+    ))}
+  </div>
+
+  <div class="chart-canvas" role="img" aria-label={ariaLabel}>
+    <slot name="svg" />
+    <div class="chart-labels">
+      <slot name="labels" />
+    </div>
+  </div>
+
+  <table class="chart-data">
+    <caption>{table.caption}</caption>
+    <thead>
+      <tr>{table.head.map((h) => <th scope="col">{h}</th>)}</tr>
+    </thead>
+    <tbody>
+      {table.rows.map((row) => (
+        <tr>{row.map((cell, i) => (i === 0 ? <th scope="row">{cell}</th> : <td>{cell}</td>))}</tr>
+      ))}
+    </tbody>
+  </table>
+
+  <figcaption class="chart-caption">{caption}</figcaption>
+  <p class="chart-takeaway">{takeaway}</p>
+  <slot name="control" />
+</figure>
