@@ -143,14 +143,15 @@ export const jevonsTicks = decadeTicks(jevonsL.indexDomain);
     </svg>
     <Fragment slot="labels">
       {/*
-        Tier band names sit deep in the left margin (well below PLOT.x0=96,
-        the same margin geometry.ts reserves for an axis title), not just
-        outside the plot edge — at PLOT.x0-10 they still reached into the
-        leftmost model label's own width and collided with it. Right-anchored
-        so the text still reads toward the axis.
+        Left-anchored, not right: right-anchored text grows LEFTWARD from its
+        x, and at x=12 (deep in the margin, clear of the leftmost model
+        label) that meant the text ran off the canvas's own left edge and
+        onto the prose column underneath — a few px for "budget", more for
+        "frontier". Left-anchored at a small x grows rightward instead,
+        staying on the canvas the same way the price ticks below already do.
       */}
       {ppfL.tierBands.map((b) => (
-        <span class="clabel" data-anchor="end" data-axis-title style={`left:${pct(12, VB.w)};top:${pct(b.y, VB.h)}`}>
+        <span class="clabel" data-anchor="start" data-axis-title style={`left:${pct(4, VB.w)};top:${pct(b.y, VB.h)}`}>
           {b.name}
         </span>
       ))}
@@ -186,7 +187,10 @@ export const jevonsTicks = decadeTicks(jevonsL.indexDomain);
         // above-point offset every other model uses, Gemini pushed well
         // further up — flipping either of them below would collide with the
         // anchor labels, which now live below their own points on purpose.
-        const dy = m.model === 'Gemini 3.1 Pro' ? -26 : 0;
+        // Ministral 3B gets a small nudge too: once the tier-band names moved
+        // to a left anchor (Bug 6), "budget" grows rightward into the same
+        // row as the chart's leftmost, closest-to-margin model label.
+        const dy = m.model === 'Gemini 3.1 Pro' ? -26 : m.model === 'Ministral 3B' ? -14 : 0;
         return (
           <span class="clabel" data-dense style={`left:${pct(m.x, VB.w)};top:${pct(m.y + dy - 14, VB.h)}`}>
             {m.label}
@@ -311,8 +315,13 @@ export const jevonsTicks = decadeTicks(jevonsL.indexDomain);
         // instead of a formula, since the three points' natural spacing
         // isn't even. Every other point clears at the standard offset.
         const dy = { 'GPT-4 Turbo': -20, 'Claude 3': -40 }[p.model] ?? 0;
+        // Whichever point sits at the very last date in the domain lands
+        // right at the plot's own right edge — centered, its label's right
+        // half ran a hair past the canvas at narrower widths. By position,
+        // not by name: the point this hits can change as the series does.
+        const anchor = p.x >= PLOT.x1 - 1 ? 'end' : null;
         return (
-          <span class="clabel" style={`left:${pct(p.x, VB.w)};top:${pct(p.y + dy - 12, VB.h)}`}>
+          <span class="clabel" data-anchor={anchor} style={`left:${pct(p.x, VB.w)};top:${pct(p.y + dy - 12, VB.h)}`}>
             {p.model}
           </span>
         );
@@ -456,11 +465,17 @@ export const jevonsTicks = decadeTicks(jevonsL.indexDomain);
           {`$${t < 1 ? t.toFixed(2) : t.toFixed(0)}`}
         </span>
       ))}
-      {budgetL.scatter.map((p) => (
-        <span class="clabel" style={`left:${pct(p.x, VB.w)};top:${pct(p.y - 12, VB.h)}`}>
-          {p.label}
-        </span>
-      ))}
+      {budgetL.scatter.map((p) => {
+        // Same edge case as the window-quality chart: the most recent point
+        // in the series sits at the plot's right edge, and a centered label
+        // there runs a hair past the canvas at narrower widths.
+        const anchor = p.x >= PLOT.x1 - 1 ? 'end' : null;
+        return (
+          <span class="clabel" data-anchor={anchor} style={`left:${pct(p.x, VB.w)};top:${pct(p.y - 12, VB.h)}`}>
+            {p.label}
+          </span>
+        );
+      })}
     </Fragment>
     <ToggleControl
       slot="control"
@@ -565,8 +580,17 @@ export const jevonsTicks = decadeTicks(jevonsL.indexDomain);
       <span class="clabel" data-accent data-anchor="start" style={`left:${pct(PLOT.x0 + 40, VB.w)};top:${pct(jevonsYScale(jevonsL.revenueIndex) - 12, VB.h)}`}>
         {`revenue index, ${FIGURES.revenueGrowth}`}
       </span>
+      {/*
+        Left-anchored INSIDE the canvas at the bar's own start, not in the
+        left margin: these run up to 33 characters ("200-step autonomous
+        debug — 750×"), roughly 200px — far more than the ~56px margin a
+        short axis word fits in. Anchored "end" out in the margin, they used
+        to render leftward straight out of the figure and onto the prose
+        column underneath. Sitting just above each bar keeps them on the
+        canvas at every width without touching the bar's own fill.
+      */}
       {jevonsL.ladder.map((r) => (
-        <span class="clabel" data-anchor="end" style={`left:${pct(PLOT.x0 - 8, VB.w)};top:${pct(r.y + r.h / 2, VB.h)}`}>
+        <span class="clabel" data-anchor="start" style={`left:${pct(r.x, VB.w)};top:${pct(r.y - 10, VB.h)}`}>
           {`${r.pattern} — ${r.mult.toLocaleString('en-US')}×`}
         </span>
       ))}
