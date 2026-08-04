@@ -274,7 +274,11 @@ export function interpolateRetention(tokens: number): number {
       `interpolateRetention: expected exactly two DEGRADATION anchors, got ${DEGRADATION.points.length}`,
     );
   }
-  const [a, b] = DEGRADATION.points;
+  // Widened from the `as const` literal pair: DEGRADATION's two token values
+  // are 10_000 and 100_000 today, so TS can prove this comparison always
+  // false and flags it as an error. The guard exists for a future edit that
+  // makes both anchors equal, which the literal type cannot represent.
+  const [a, b] = DEGRADATION.points as readonly { tokens: number; retention: number }[];
   if (a.tokens === b.tokens) {
     throw new Error(`interpolateRetention: anchors must have distinct tokens, both are ${a.tokens}`);
   }
