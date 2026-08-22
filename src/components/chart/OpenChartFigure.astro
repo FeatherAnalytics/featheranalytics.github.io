@@ -1,0 +1,64 @@
+---
+/**
+ * A single OpenChart figure, sized to break out of the prose column.
+ *
+ * The layout idea is borrowed from labs.tryopendata.ai: body text stays at a
+ * readable measure while every figure widens past it, so a chart reads as an
+ * exhibit the argument steps aside for rather than an image dropped into a
+ * paragraph. The breakout collapses back to the column at `xl`, where the
+ * viewport is wide enough that the prose is already inset from the window edge.
+ */
+import type { ChartSpec, LayerSpec } from '@opendata-ai/openchart-core';
+import '../../styles/openchart.css';
+
+interface Props {
+  spec: ChartSpec | LayerSpec;
+  /**
+   * The finding, in a sentence, for a reader who never sees the chart.
+   *
+   * OpenChart generates its own alt text and a hidden data table from the spec,
+   * which together describe the chart's *shape*. This says what it *means*, and
+   * is the one thing the generated text cannot supply.
+   */
+  alt: string;
+  /** Reading instructions: what the axes are, what is measured, what is drawn. */
+  caption?: string;
+  /** Where the numbers came from. Rendered under the caption. */
+  source?: string;
+  /**
+   * Height reserved before the chart bundle loads, in pixels.
+   *
+   * Without it the figure collapses to nothing on first paint and the prose
+   * below it jumps when the chart arrives. Released once mounted, so an
+   * over-estimate costs nothing after hydration.
+   */
+  minHeight?: number;
+}
+
+const { spec, alt, caption, source, minHeight = 460 } = Astro.props;
+---
+
+<figure
+  class="oc-breakout not-prose my-10 overflow-hidden rounded-xl border border-rule bg-card"
+>
+  <p class="sr-only">{alt}</p>
+
+  <oc-figure>
+    <script type="application/json" data-oc-spec set:html={JSON.stringify(spec)} />
+    <div class="oc-reserve relative flex flex-col p-3 sm:p-5" data-oc-mount style={`min-height:${minHeight}px`}>
+    </div>
+  </oc-figure>
+
+  {
+    (caption || source) && (
+      <figcaption class="border-t border-rule px-4 py-3 text-sm leading-relaxed text-ink-muted sm:px-6">
+        {caption}
+        {source && <span class="mt-1 block font-mono text-xs">{source}</span>}
+      </figcaption>
+    )
+  }
+</figure>
+
+<script>
+  import '../../scripts/openchart';
+</script>

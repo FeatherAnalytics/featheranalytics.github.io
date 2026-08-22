@@ -1,0 +1,150 @@
+---
+/**
+ * Window × Quality: a scroll story whose last step hands the reader the control.
+ *
+ * The first three steps pin the decay rate to a fixed value — mild, measured,
+ * severe — so the reader watches the effective line pull away from the nominal
+ * one three times before being asked to set the rate themselves. By the time
+ * the slider appears they know what moving it does, which a slider presented
+ * cold does not communicate.
+ *
+ * Layout matches `OpenChartStory` — sticky panel, steps column, tick rail — so
+ * the two read as one device. The difference is underneath: this drives the
+ * chart by recomputing the whole spec from one number, rather than by merging
+ * cumulative patches, because every step here changes the entire dataset.
+ */
+import { DECAY_MAX, DECAY_MIN, MEASURED_DECAY, QUALITY_STEPS, sentenceFor, windowQualitySpec } from '../../lib/charts/equivalence';
+import '../../styles/openchart.css';
+
+interface Props {
+  minHeight?: number;
+}
+
+const { minHeight = 420 } = Astro.props;
+
+// Server-rendered at the first step, so the figure is a complete exhibit before
+// any script runs and with JS off it stays one.
+const openingDecay = QUALITY_STEPS[0].decay ?? MEASURED_DECAY;
+const spec = windowQualitySpec(openingDecay);
+const sentence = sentenceFor(openingDecay);
+
+const label = 'Context window offered against what it is worth after quality';
+const alt =
+  'Two lines on one log token axis: the context window each model advertised, and what that window is worth once ' +
+  'per-token retrieval quality is priced in. The two start together and separate as the window grows, because a ' +
+  'constant share of quality is lost with every tenfold increase in size. At the measured rate of 35% per tenfold, ' +
+  'a 1M window does the work of 3.7 sessions at 200K rather than the 5 its size implies.';
+
+// Percentage points so the slider steps on whole numbers and the measured rate
+// lands exactly on a step.
+const sliderMin = Math.round(DECAY_MIN * 100);
+const sliderMax = Math.round(DECAY_MAX * 100);
+const measuredPct = Math.round(MEASURED_DECAY * 100);
+
+const payload = QUALITY_STEPS.map((s) => (s.decay === undefined ? null : s.decay));
+const lastIndex = QUALITY_STEPS.length - 1;
+---
+
+<oc-quality-story class="not-prose my-12 block" aria-label={label}>
+  <script type="application/json" data-oc-decays set:html={JSON.stringify(payload)} />
+
+  <p class="sr-only">{alt}</p>
+
+  <div class="oc-breakout lg:grid lg:grid-cols-[1fr_minmax(0,20rem)] lg:gap-8">
+    <div
+      class="sticky top-16 z-10 -mx-4 border-y border-rule bg-card/95 backdrop-blur-sm lg:top-24 lg:mx-0 lg:self-start lg:rounded-xl lg:border oc-panel"
+    >
+      <div class="oc-reserve flex h-full flex-col justify-center p-3 sm:p-5" data-oc-mount style={`min-height:${minHeight}px`}>
+      </div>
+    </div>
+
+    <div class="flex gap-4 px-4 lg:px-0" data-oc-steps>
+      <nav class="hidden shrink-0 flex-col items-center pt-[45vh] lg:flex" aria-label={`${label} — steps`}>
+        <div class="sticky top-1/2 flex flex-col gap-1.5">
+          {
+            QUALITY_STEPS.map((step, i) => (
+              <button
+                type="button"
+                data-oc-rail-button
+                tabindex={i === 0 ? 0 : -1}
+                aria-current={i === 0 ? 'step' : undefined}
+                aria-label={`Go to step ${i + 1} of ${QUALITY_STEPS.length}: ${step.label}`}
+                class="group flex w-6 cursor-pointer items-center justify-center py-1"
+              >
+                <span class="h-0.5 w-4 rounded-full bg-rule transition-all duration-200 group-hover:bg-ink-muted group-aria-[current=step]:w-6 group-aria-[current=step]:bg-accent" />
+              </button>
+            ))
+          }
+        </div>
+      </nav>
+
+      <div class="min-w-0 flex-1">
+        {
+          QUALITY_STEPS.map((step, i) => (
+            <div
+              data-oc-step
+              class="min-h-[70vh] py-[15vh] opacity-45 transition-opacity duration-300 data-[oc-active]:opacity-100 lg:min-h-[80vh]"
+            >
+              <p class="mb-2 font-mono text-xs uppercase tracking-widest text-ink-muted">
+                {String(i + 1).padStart(2, '0')} / {String(QUALITY_STEPS.length).padStart(2, '0')} · {step.label}
+              </p>
+              <div class="prose prose-sm max-w-none dark:prose-invert">
+                <slot name={`step-${i}`} />
+              </div>
+
+              {i === lastIndex && (
+                <div class="mt-4 rounded-lg border border-rule bg-paper p-4">
+                  <label class="flex flex-col gap-2">
+                    <span class="flex items-baseline justify-between gap-4">
+                      <span class="font-mono text-xs uppercase tracking-widest text-ink-muted">
+                        Quality lost per 10× window
+                      </span>
+                      <output class="font-mono text-sm text-ink" data-oc-readout>{`${measuredPct}%`}</output>
+                    </span>
+                    <input
+                      type="range"
+                      min={sliderMin}
+                      max={sliderMax}
+                      value={measuredPct}
+                      step="1"
+                      data-oc-slider
+                      class="w-full accent-accent"
+                      aria-label="Share of retrieval quality lost per tenfold increase in context window"
+                    />
+                    <span class="flex justify-between font-mono text-[0.65rem] uppercase tracking-widest text-ink-muted">
+                      <span>{sliderMin}%</span>
+                      <span>{measuredPct}% measured</span>
+                      <span>{sliderMax}%</span>
+                    </span>
+                  </label>
+                </div>
+              )}
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+
+  {/*
+    One live region for the whole figure. The chart's generated alt text does
+    not change as the rate does, so without this neither a scroll step nor a
+    slider drag announces anything to a screen reader.
+  */}
+  <p class="mt-3 px-4 text-sm leading-relaxed text-ink-body lg:px-0" data-oc-sentence aria-live="polite">{sentence}</p>
+
+  <figcaption class="mt-2 px-4 text-sm leading-relaxed text-ink-muted lg:px-0">
+    Both series are token counts on one log scale, so the vertical gap between them is quality loss and nothing else.
+    The effective line is the window multiplied by retained quality, modelled as a constant share lost per tenfold
+    increase. That constant-rate shape is the assumption here — it was fitted to a single measured decade, 10K to 100K,
+    and two measurements fix a rate without fixing a shape. The comparison is robust to where quality is anchored at
+    100%: the reference cancels out of the ratio, and only the absolute token values depend on it.
+    <span class="mt-1 block font-mono text-xs">
+      Research doc 05 “The Window-Quality Equilibrium”, sections 1 and 3 — Chroma 2025 (18 models); Liu et al. 2023
+    </span>
+  </figcaption>
+</oc-quality-story>
+
+<script>
+  import '../../scripts/openchart';
+</script>

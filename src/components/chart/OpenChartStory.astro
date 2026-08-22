@@ -1,0 +1,130 @@
+---
+/**
+ * A scroll-driven chart story: one chart that transforms as the reader moves
+ * through a column of prose steps beside it.
+ *
+ * The chart is a single OpenChart instance driven by cumulative patch steps, so
+ * a step describes only what changes and the engine morphs the marks between
+ * states. That is the whole reason to prefer this over four separate figures:
+ * the reader keeps looking at the same object while the argument moves, instead
+ * of re-orienting to a new pair of axes every few paragraphs.
+ *
+ * Layout follows the same pattern as the labs.tryopendata.ai stories — sticky
+ * chart panel, scrolling steps, a tick rail that reports position and doubles
+ * as navigation. Below `lg` the two columns stack and the chart pins to the top
+ * of the viewport instead of the side, because a side-by-side split at phone
+ * width leaves neither half readable.
+ */
+import type { ChartSpec, LayerSpec } from '@opendata-ai/openchart-core';
+import '../../styles/openchart.css';
+
+interface Step {
+  /** Rail tooltip and accessible name. Says what this step shows. */
+  label: string;
+  /** Deep-partial spec patch, merged cumulatively onto the base. */
+  spec?: Record<string, unknown>;
+  /** Sugar for `encoding.color.highlight`. Pass `[]` to clear an earlier one. */
+  highlight?: string[] | null;
+  /** Data-coordinate region to frame, e.g. `{ x: [2023, 2026] }`. */
+  camera?: Record<string, unknown> | null;
+}
+
+interface Props {
+  spec: ChartSpec | LayerSpec;
+  steps: Step[];
+  /** Accessible name for the section landmark. */
+  label: string;
+  /** The finding, in a sentence, for a reader who never sees the chart. */
+  alt: string;
+  caption?: string;
+  source?: string;
+  minHeight?: number;
+}
+
+const { spec, steps, label, alt, caption, source, minHeight = 460 } = Astro.props;
+
+// Only the fields the runtime consumes are serialized. `label` is rail chrome
+// and is rendered server-side below, so shipping it inside the payload as well
+// would put every step's prose into the page twice.
+const payload = {
+  spec,
+  steps: steps.map(({ spec: patch, highlight, camera }) => ({
+    ...(patch ? { spec: patch } : {}),
+    ...(highlight !== undefined ? { highlight } : {}),
+    ...(camera !== undefined ? { camera } : {}),
+  })),
+};
+---
+
+<oc-story class="not-prose my-12 block" aria-label={label}>
+  <script type="application/json" data-oc-story set:html={JSON.stringify(payload)} />
+
+  <p class="sr-only">{alt}</p>
+
+  <div class="oc-breakout lg:grid lg:grid-cols-[1fr_minmax(0,20rem)] lg:gap-8">
+    <div
+      class="sticky top-16 z-10 -mx-4 border-y border-rule bg-card/95 backdrop-blur-sm lg:top-24 lg:mx-0 lg:self-start lg:rounded-xl lg:border oc-panel"
+    >
+      <div class="oc-reserve flex h-full flex-col justify-center p-3 sm:p-5" data-oc-mount style={`min-height:${minHeight}px`}>
+      </div>
+    </div>
+
+    <div class="flex gap-4 px-4 lg:px-0" data-oc-steps>
+      {/*
+        The rail is `aria-hidden` and its buttons are reachable only through the
+        roving tabindex the runtime maintains: every step it points at is already
+        in the document as prose immediately to its right, so exposing both to a
+        screen reader would read the article's structure out twice.
+      */}
+      <nav class="hidden shrink-0 flex-col items-center pt-[45vh] lg:flex" aria-label={`${label} — steps`}>
+        <div class="sticky top-1/2 flex flex-col gap-1.5">
+          {
+            steps.map((step, i) => (
+              <button
+                type="button"
+                data-oc-rail-button
+                tabindex={i === 0 ? 0 : -1}
+                aria-current={i === 0 ? 'step' : undefined}
+                aria-label={`Go to step ${i + 1} of ${steps.length}: ${step.label}`}
+                class="group flex w-6 cursor-pointer items-center justify-center py-1"
+              >
+                <span class="h-0.5 w-4 rounded-full bg-rule transition-all duration-200 group-hover:bg-ink-muted group-aria-[current=step]:w-6 group-aria-[current=step]:bg-accent" />
+              </button>
+            ))
+          }
+        </div>
+      </nav>
+
+      <div class="min-w-0 flex-1">
+        {
+          steps.map((step, i) => (
+            <div
+              data-oc-step
+              class="min-h-[70vh] py-[15vh] opacity-45 transition-opacity duration-300 data-[oc-active]:opacity-100 lg:min-h-[80vh]"
+            >
+              <p class="mb-2 font-mono text-xs uppercase tracking-widest text-ink-muted">
+                {String(i + 1).padStart(2, '0')} / {String(steps.length).padStart(2, '0')}
+              </p>
+              <div class="prose prose-sm max-w-none dark:prose-invert">
+                <slot name={`step-${i}`} />
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+
+  {
+    (caption || source) && (
+      <figcaption class="mt-2 px-4 text-sm leading-relaxed text-ink-muted lg:px-0">
+        {caption}
+        {source && <span class="mt-1 block font-mono text-xs">{source}</span>}
+      </figcaption>
+    )
+  }
+</oc-story>
+
+<script>
+  import '../../scripts/openchart';
+</script>

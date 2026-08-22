@@ -7,148 +7,40 @@ tags: [ai, economics]
 published: false
 ---
 
-{/*
-  ============================================================================
-  AUTHORING GUIDE — how to write the prose in this post
-  ============================================================================
-
-  The prose is not written. Every section carries an outline instead:
-
-      **Outline — replace with prose.**
-      - a bullet saying what to cover
-      - **Chart shows:** what is on screen at that step
-
-  Replace each outline block with real paragraphs. There are 24 of them.
-
-  WHERE THEY ARE (line numbers drift as you write — search for the marker
-  `Outline — replace with prose.` instead of trusting these):
-
-      Intro                      · 1 block
-      What a token costs         · 1 block
-      Producer Tradeoff (PPF)    · 4 blocks, one per ScrollyStep
-      Window x Quality           · 5 blocks
-      The cost floor             · 1 block
-      Budget Constraint          · 4 blocks
-      Jevons Paradox             · 5 blocks
-      Who supplies this          · 1 block
-      The Thread                 · 1 block
-      Where this breaks          · 1 block
-      Sources                    · already final, leave it alone
-
-  FOUR RULES
-
-  1. KEEP THE {FIGURES.x} REFERENCES. Every number that also appears in a
-     chart comes from `src/data/tokenomics.ts` and is interpolated, never
-     typed. That is what makes it impossible for a sentence to disagree with
-     the chart beside it. `publishedFigures.test.ts` enforces it: type
-     "$0.04" instead of {FIGURES.cheapestTier} and `npm test` fails. If you
-     need a figure that has no key yet, add it to FIGURES rather than typing
-     the digits here.
-
-  2. DELETE THE OUTLINE MARKER LINE as you replace each block. A test blocks
-     `published: true` while any marker remains, so an unfinished draft
-     cannot reach the web by accident.
-
-  3. DROP THE `Chart shows:` BULLET. It tells you what the reader is looking
-     at during that step so your prose can point at it. It is a note to the
-     author, not content.
-
-  4. KEEP <ScrollyStep> AND </ScrollyStep> AT COLUMN 0. Indent them under a
-     bullet list and markdown's lazy-continuation swallows them into the list
-     item, and the step silently stops existing.
-
-  A step's shape when you are done:
-
-      <ScrollyStep step={0}>
-
-      Your paragraphs. Prices ran from {FIGURES.startPrice} to
-      {FIGURES.endPrice} over the period.
-
-      </ScrollyStep>
-
-  ONE MORE MDX TRAP: do not start a `//` comment on its own line after a
-  blank line above the export block. MDX reads that chunk as a markdown
-  paragraph and silently swallows the `export const` lines after it — the
-  charts then fail at render with "x is not defined" and no build error.
-  Keep the import/export preamble contiguous.
-
-  WORKFLOW
-
-      set `published: true` in the frontmatter above
-      npm run dev        -> open /blog/2026-06-26-token-economics/
-      npm test           -> catches typed figures and leftover markers
-      npm run check      -> typecheck
-      npm run build      -> confirm it builds
-
-  Leave `published: true` while drafting so the route resolves. The tests are
-  the safety net for shipping, not the flag.
-
-  Design and implementation notes live in `docs/superpowers/` — that
-  directory is gitignored, so they exist only on the machine that wrote them.
-  ============================================================================
-*/}
-
-import ScrollySection from '../../components/scrolly/ScrollySection.astro';
-import ScrollyStep from '../../components/scrolly/ScrollyStep.astro';
-import ChartFigure from '../../components/scrolly/ChartFigure.astro';
-import RangeControl from '../../components/scrolly/RangeControl.astro';
-import ToggleControl from '../../components/scrolly/ToggleControl.astro';
+import OpenChartFigure from '../../components/chart/OpenChartFigure.astro';
+import OpenChartStory from '../../components/chart/OpenChartStory.astro';
+import OpenChartQualityStory from '../../components/chart/OpenChartQualityStory.astro';
 import { Fragment } from 'astro/jsx-runtime';
 
-import { FIGURES, MODEL_TIERS, DECLINE_COMPARISON, COST_FLOOR, SUPPLY_SIDE, JEVONS, AGENT_MULTIPLIER, DEGRADATION } from '../../data/tokenomics';
-import { VB, PLOT, pct } from '../../lib/charts/geometry';
-import { log10, decadeTicks } from '../../lib/charts/scale';
-import * as ppf from '../../lib/charts/ppf';
-import * as windowQuality from '../../lib/charts/windowQuality';
-import * as budget from '../../lib/charts/budget';
-import * as jevons from '../../lib/charts/jevons';
+import {
+  FIGURES,
+  MODEL_TIERS,
+  DECLINE_COMPARISON,
+  COST_FLOOR,
+  SUPPLY_SIDE,
+  JEVONS,
+  AGENT_MULTIPLIER,
+  DEGRADATION,
+  WINDOW_TIMELINE,
+  QUALITY_COST,
+} from '../../data/tokenomics';
+import { ppfStory, budgetStory, jevonsStory, agentLadder } from '../../lib/charts/specs';
+import { LABELS } from '../../lib/charts/equivalence';
 
-export const ppfL = ppf.layout();
-export const wqL = windowQuality.layout();
-export const budgetL = budget.layout();
-export const jevonsL = jevons.layout();
-// Initial control positions, computed the same way scrolly.ts computes them on
-// first input, so the hardcoded readout prop below can never drift from what
-// the script produces once a reader touches the slider.
-export const ppfInitial = ppf.recompute(100);
-// The window-quality slider's real domain, named once so the RangeControl
-// props, the initial recompute, and the hint text can never drift apart.
-export const WQ_LOG_MIN = 8_000;
-export const WQ_LOG_MAX = 2_000_000;
-export const wqInitial = windowQuality.recompute(WQ_LOG_MIN);
-export const budgetInitial = budget.recompute(23);
-export const jevonsInitial = jevons.recompute(-21);
-// Axis scales and ticks, derived from each module's own exported domain
-// rather than a second copy of the numbers — geometry.ts's log10 runs in the
-// build here exactly as it runs inside the chart modules.
-export const ppfXScale = log10(ppfL.priceDomain, [PLOT.x0, PLOT.x1]);
-export const ppfTicks = decadeTicks(ppfL.priceDomain);
-export const wqYScale = log10(wqL.tokenDomain, [PLOT.y1, PLOT.y0]);
-export const wqTicks = decadeTicks(wqL.tokenDomain);
-export const budgetYScale = log10(budgetL.priceDomain, [PLOT.y1, PLOT.y0]);
-export const budgetTicks = decadeTicks(budgetL.priceDomain);
-// jevons.ts keeps its split-ratio constant private; restated here from the
-// same public PLOT and the same ratio so the axis lines up with the ladder
-// underneath it, rather than a second guessed split.
-export const jevonsSplit = PLOT.y0 + (PLOT.y1 - PLOT.y0) * 0.62;
-export const jevonsYScale = log10(jevonsL.indexDomain, [jevonsSplit, PLOT.y0]);
-export const jevonsTicks = decadeTicks(jevonsL.indexDomain);
+export const TIER_NAMES = ['Budget', 'Mid', 'Frontier'];
 
 **Outline — replace with prose.**
 
 - Open on the shift: price fell {FIGURES.startPrice} → {FIGURES.endPrice} ({FIGURES.deflationFactor}), windows grew {FIGURES.windowGrowthFactor}, and enterprise spend still grew {JEVONS.enterpriseSpendGrowthPct}%.
-- State the thesis: four classical microeconomic frameworks — PPF, an equilibrium, a budget constraint, Jevons paradox — explain why cheaper and bigger did not mean less spend.
-- Tell the reader these charts are interactive: drag the controls, don't just read the captions.
-- Land the hook question the rest of the post answers: if tokens got this much cheaper, why did total spend grow instead of shrink?
+- State the thesis: four classical microeconomic frameworks explain why cheaper and bigger did not mean less spend.
+- Tell the reader the charts move as they scroll, and the tick rail beside each one is clickable.
 
 ## What a token costs
 
 **Outline — replace with prose.**
 
-- State the point of the table: price no longer tracks tier the simple way it used to — cheapest ({FIGURES.cheapestTier}) to dearest ({FIGURES.dearestTier}) is a real spread across five current models.
-- Flag the honesty gap in the row itself: Ministral 3B has no context window stated anywhere in the corpus — say "not stated," not a guess.
-- Preview the concavity claim the PPF chart makes next: the last fifteen SWE-bench points cost {FIGURES.sweCheap} → {FIGURES.sweDear} per million tokens.
-- Note this is the only place raw rate-card numbers sit in a table — every chart after this treats them as points on a curve, not a list.
+- Cheapest ({FIGURES.cheapestTier}) to dearest ({FIGURES.dearestTier}) is a real spread across five current models.
+- Ministral 3B has no context window stated anywhere in the corpus — "not stated," not a guess.
 
 <div class="not-prose">
   <table>
@@ -168,7 +60,7 @@ export const jevonsTicks = decadeTicks(jevonsL.indexDomain);
           <th scope="row">{m.model}</th>
           <td>{m.provider}</td>
           <td>{`$${m.usdIn.toFixed(2)}`}</td>
-          <td>{ppfL.tierBands[m.tier - 1].name}</td>
+          <td>{TIER_NAMES[m.tier - 1]}</td>
           <td>{m.contextK === null ? 'not stated' : `${m.contextK}K`}</td>
         </tr>
       ))}
@@ -178,596 +70,262 @@ export const jevonsTicks = decadeTicks(jevonsL.indexDomain);
 
 ## Producer Tradeoff (PPF)
 
-<ScrollySection chartKey="ppf" label="Producer tradeoff between price and provider-assigned tier">
-  <ChartFigure
-    slot="chart"
-    ariaLabel={`Scatter of ${MODEL_TIERS.points.length} June 2026 models by input price and provider tier, with two measured SWE-bench cost anchors and a stylized production-possibility frontier a reader can shift with a compute-budget slider.`}
-    caption="X axis: June 2026 input price per million tokens, measured, log scale. Y axis: each provider's own budget / mid / frontier ranking — ordinal, not a quality score, because no per-model quality metric exists in the corpus."
-    takeaway={`+15 SWE-bench points costs ${FIGURES.sweCheap} → ${FIGURES.sweDear} per million tokens.`}
-    legend={[
-      { kind: 'measured', text: 'rate card + SWE-bench anchors (measured)' },
-      { kind: 'stylized', text: 'frontier (drawn)' },
-    ]}
-    table={{
-      caption: MODEL_TIERS.source,
-      head: ['Model', 'Provider', 'Price ($ / M tokens, input)', 'Tier', 'Context window'],
-      rows: ppfL.models.map((m) => [
-        m.model,
-        m.provider,
-        `$${m.usdIn.toFixed(2)}`,
-        ppfL.tierBands[m.tier - 1].name,
-        m.contextK === null ? 'not stated' : `${m.contextK}K`,
-      ]),
-    }}
-  >
-    <svg slot="svg" viewBox={`0 0 ${VB.w} ${VB.h}`} aria-hidden="true">
-      <g class="layer" data-steps="0 1 2 3">
-        <line x1={PLOT.x0} y1={PLOT.y1} x2={PLOT.x1} y2={PLOT.y1} stroke="var(--chart-axis)" vector-effect="non-scaling-stroke" />
-        {ppfL.tierBands.map((b) => (
-          <line x1={PLOT.x0} y1={b.y} x2={PLOT.x1} y2={b.y} stroke="var(--chart-grid)" stroke-dasharray="4 4" vector-effect="non-scaling-stroke" />
-        ))}
-        {ppfTicks.map((t) => (
-          <line x1={ppfXScale(t)} y1={PLOT.y0} x2={ppfXScale(t)} y2={PLOT.y1} stroke="var(--chart-grid)" vector-effect="non-scaling-stroke" />
-        ))}
-      </g>
-      <g class="layer" data-steps="1 2 3">
-        {ppfL.models.map((m) => (
-          <circle cx={m.x} cy={m.y} r="6" fill="var(--chart-mark)" />
-        ))}
-      </g>
-      <g class="layer" data-steps="2 3">
-        {ppfL.anchors.map((a) => (
-          <circle cx={a.x} cy={a.y} r="5" fill="var(--accent)" stroke="var(--paper)" stroke-width="1.5" />
-        ))}
-      </g>
-      <path data-live-path class="layer" data-steps="3" d={ppfInitial.path} fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="7 5" vector-effect="non-scaling-stroke" />
-    </svg>
-    <Fragment slot="labels">
-      {/*
-        Left-anchored, not right: right-anchored text grows LEFTWARD from its
-        x, and at x=12 (deep in the margin, clear of the leftmost model
-        label) that meant the text ran off the canvas's own left edge and
-        onto the prose column underneath — a few px for "budget", more for
-        "frontier". Left-anchored at a small x grows rightward instead,
-        staying on the canvas the same way the price ticks below already do.
-      */}
-      {ppfL.tierBands.map((b) => (
-        <span class="clabel" data-anchor="start" data-axis-title style={`left:${pct(4, VB.w)};top:${pct(b.y, VB.h)}`}>
-          {b.name}
-        </span>
-      ))}
-      {ppfTicks.map((t) => (
-        <span class="clabel" style={`left:${pct(ppfXScale(t), VB.w)};top:${pct(PLOT.y1 + 14, VB.h)}`}>
-          {`$${t < 1 ? t.toFixed(2) : t.toFixed(0)}`}
-        </span>
-      ))}
-      {/*
-        Models label ABOVE their point, anchors label BELOW theirs — a fixed
-        convention, not per-point nudging, so a reader can tell a model mark
-        from a SWE-bench anchor by position as well as by color (anchors are
-        already --accent against models' --chart-mark). An anchor and a model
-        sharing a tier band no longer land in the same row.
-      */}
-      {/*
-        Every model and anchor label carries data-dense: below the 520px
-        container-query threshold in scrolly.css they all drop out together,
-        leaving the tier names, price ticks, and circles — plus the full
-        numbers in the hidden accessible table. At full width none of this
-        applies; the query only fires on a genuinely narrow chart, per the
-        container's own comment. Measured live: at a 375px viewport the
-        chart's canvas is narrow enough that even the widest-spaced pair
-        (budget tier: Ministral 3B / Haiku 4, 496 units apart) collides once
-        fixed-size text takes up a bigger share of a smaller box — dense
-        hiding is the intended fallback for that, not per-point nudging.
-      */}
-      {ppfL.models.map((m) => {
-        // The frontier-tier pair is only 141 viewBox units apart — the
-        // tightest pair on the chart — so it needs a real vertical split, not
-        // the ±10 that turned out to still overlap at rendered width. Both
-        // stay above their point (negative or zero dy): Opus at the standard
-        // above-point offset every other model uses, Gemini pushed well
-        // further up — flipping either of them below would collide with the
-        // anchor labels, which now live below their own points on purpose.
-        // Ministral 3B gets a small nudge too: once the tier-band names moved
-        // to a left anchor (Bug 6), "budget" grows rightward into the same
-        // row as the chart's leftmost, closest-to-margin model label.
-        const dy = m.model === 'Gemini 3.1 Pro' ? -26 : m.model === 'Ministral 3B' ? -14 : 0;
-        return (
-          <span class="clabel" data-dense style={`left:${pct(m.x, VB.w)};top:${pct(m.y + dy - 14, VB.h)}`}>
-            {m.label}
-          </span>
-        );
-      })}
-      {ppfL.anchors.map((a) => (
-        <span
-          class="clabel"
-          data-accent
-          data-dense
-          data-anchor={a.clamped ? 'end' : 'start'}
-          style={`left:${pct(a.x, VB.w)};top:${pct(a.y + 16, VB.h)}`}
-        >
-          {a.clamped
-            ? `$${a.usdPerMTok}/M at ${a.swePct}% — off-scale →`
-            : `$${a.usdPerMTok}/M at ${a.swePct}%`}
-        </span>
-      ))}
-    </Fragment>
-    <RangeControl
-      slot="control"
-      label="Compute budget"
-      min={100}
-      max={150}
-      step={5}
-      value={100}
-      readout={ppfInitial.readout}
-      hint="Shifts the drawn frontier only. The rate-card points and SWE-bench anchors are measured and never move."
-    />
-  </ChartFigure>
+<OpenChartStory
+  spec={ppfStory.spec}
+  steps={ppfStory.steps}
+  label={ppfStory.label}
+  alt={ppfStory.alt}
+  caption={ppfStory.caption}
+  source={ppfStory.source}
+  minHeight={460}
+>
 
-<ScrollyStep step={0}>
+<Fragment slot="step-0">
 
 **Outline — replace with prose.**
 
-- Introduce the axes: x is June 2026 input price (log scale, real rate-card data); y is ordinal provider tier, not a quality score.
-- Explain why there's no numeric y-axis: no per-model quality metric exists in the corpus, so a number here would fake precision.
-- Note what's a curve away from being a full PPF chart yet — right now it's just the measured scatter.
-- **Chart shows:** the five rate-card points positioned by price and tier band, no frontier curve drawn yet.
+- X is June 2026 input price on a log scale, real rate-card data; y is the provider's own tier band, not a quality score.
+- No numeric y-axis: no per-model quality metric exists in the corpus, so a number would fake precision.
+- **Chart shows:** all five rate-card points, colored by provider.
 
-</ScrollyStep>
+</Fragment>
 
-<ScrollyStep step={1}>
-
-**Outline — replace with prose.**
-
-- Name the spread: {FIGURES.cheapestTier} (Ministral 3B, budget) up to {FIGURES.dearestTier} (Opus 4, frontier).
-- Call out the crowded pair: Gemini 3.1 Pro and Opus 4 sit close together on the frontier band — both frontier-tier, price gap small relative to the axis.
-- Contrast against the budget-tier pair, which sits far apart on the same axis despite also being two points.
-- **Chart shows:** all five rate-card points labeled, the frontier-tier pair marked as the tightest on the chart.
-
-</ScrollyStep>
-
-<ScrollyStep step={2}>
+<Fragment slot="step-1">
 
 **Outline — replace with prose.**
 
-- Bring in the two real SWE-bench anchors: {FIGURES.sweCheap} at {ppfL.anchors[0].swePct}%, {FIGURES.sweDear} at {ppfL.anchors[1].swePct}%.
-- Flag the second anchor as off-scale: it sits at the chart's price ceiling, not really at {FIGURES.sweDear} — say so, don't let it read as an on-scale point.
-- Land the concavity point: the last fifteen quality points cost roughly fifty times the first eighty.
-- **Chart shows:** two anchor points, one on-scale, one clamped and arrow-marked at the right edge.
+- Ministral 3B at {FIGURES.cheapestTier} and Haiku 4 at {`$${MODEL_TIERS.points[1].usdIn.toFixed(2)}`} sit in the same band an order of magnitude apart.
+- A tier is a marketing position, not a measurement.
+- **Chart shows:** Mistral and Anthropic held in color, Google dropped back.
 
-</ScrollyStep>
+</Fragment>
 
-<ScrollyStep step={3}>
+<Fragment slot="step-2">
 
 **Outline — replace with prose.**
 
-- Introduce the frontier curve as drawn, not measured — the legend and caption both say so.
-- Explain the slider: raising compute budget shifts the frontier outward, toward better tradeoffs at every price.
-- Say what does NOT move when the slider moves: the five rate-card points and two anchors are fixed measurements.
-- Invite the drag: try the top of the slider and notice the curve stays inside the frame — that's a deliberate ceiling, not an accident.
-- **Chart shows:** the frontier live, slider control active, everything else static.
+- The inversion: Google's frontier-tier model is priced below Anthropic's mid-tier one.
+- Providers are pricing against each other, not against a shared quality scale.
+- **Chart shows:** Google alone in color, with the callout naming its price.
 
-</ScrollyStep>
-</ScrollySection>
+</Fragment>
+
+<Fragment slot="step-3">
+
+**Outline — replace with prose.**
+
+- The two SWE-bench anchors: {FIGURES.sweCheap} at {QUALITY_COST.points[0].swePct}%, {FIGURES.sweDear} at {QUALITY_COST.points[1].swePct}%.
+- The last fifteen quality points cost roughly fifty times the first eighty — the shape a PPF predicts.
+- **Chart shows:** every provider back in color with the SWE-bench cost band across the price axis.
+
+</Fragment>
+
+</OpenChartStory>
 
 ## Window × Quality
 
-<ScrollySection chartKey="window-quality" label="Context window offered against accuracy retained, over time">
-  <ChartFigure
-    slot="chart"
-    ariaLabel={`Nine measured context-window releases from 2020 to 2026 against a flat measured typical-usage line, with a reader-driven readout of accuracy retention at any window size.`}
-    caption="Both series are measured: the window each model shipped, dated, and how much of it a typical session actually uses. Only one of the two lines moves."
-    takeaway={`Window grew ${FIGURES.windowGrowthFactor}; typical usage stayed near ${FIGURES.typicalUsage}.`}
-    legend={[
-      { kind: 'measured', text: 'context window offered (measured GA dates)' },
-      { kind: 'measured', text: 'typical usage (measured, flat)' },
-    ]}
-    table={{
-      caption: wqL.utilization.length + ' measured utilization points — ' + FIGURES.degradationDrop + ' accuracy drop at depth',
-      head: ['Window', 'Typical usage', 'Utilization'],
-      rows: wqL.utilization.map((u) => [`${u.window.toLocaleString('en-US')}`, `${u.used.toLocaleString('en-US')}`, `${u.pct}%`]),
-    }}
-  >
-    <svg slot="svg" viewBox={`0 0 ${VB.w} ${VB.h}`} aria-hidden="true">
-      <g class="layer" data-steps="0 1 2 3 4">
-        <line x1={PLOT.x0} y1={PLOT.y1} x2={PLOT.x1} y2={PLOT.y1} stroke="var(--chart-axis)" vector-effect="non-scaling-stroke" />
-        {wqTicks.map((t) => (
-          <line x1={PLOT.x0} y1={wqYScale(t)} x2={PLOT.x1} y2={wqYScale(t)} stroke="var(--chart-grid)" vector-effect="non-scaling-stroke" />
-        ))}
-        {wqL.offered.map((p) => (
-          <circle cx={p.x} cy={p.y} r="5" fill="var(--chart-mark)" />
-        ))}
-      </g>
-      <path class="layer" data-steps="1 2 3 4" d={wqL.envelopePath} fill="none" stroke="var(--accent)" stroke-width="2" vector-effect="non-scaling-stroke" />
-      <line class="layer" data-steps="2 3 4" x1={PLOT.x0} y1={wqL.usedLine.y} x2={PLOT.x1} y2={wqL.usedLine.y} stroke="var(--chart-axis)" stroke-dasharray="5 5" vector-effect="non-scaling-stroke" />
-    </svg>
-    <Fragment slot="labels">
-      {wqTicks.map((t) => (
-        <span class="clabel" data-anchor="end" style={`left:${pct(PLOT.x0 - 8, VB.w)};top:${pct(wqYScale(t), VB.h)}`}>
-          {t >= 1_000_000 ? `${t / 1_000_000}M` : `${t / 1000}K`}
-        </span>
-      ))}
-      {wqL.offered.map((p) => {
-        // Claude 2, GPT-4 Turbo, and Claude 3 land within ten months of each
-        // other in both date and window size — close enough in x and y that
-        // no single shared offset (tried ±20, then alternating by array
-        // order) cleared every pair without creating a new one elsewhere.
-        // Measured live and staggered by name into three explicit tiers
-        // instead of a formula, since the three points' natural spacing
-        // isn't even. Every other point clears at the standard offset.
-        const dy = { 'GPT-4 Turbo': -20, 'Claude 3': -40 }[p.model] ?? 0;
-        // Whichever point sits at the very last date in the domain lands
-        // right at the plot's own right edge — centered, its label's right
-        // half ran a hair past the canvas at narrower widths. By position,
-        // not by name: the point this hits can change as the series does.
-        const anchor = p.x >= PLOT.x1 - 1 ? 'end' : null;
-        return (
-          <span class="clabel" data-anchor={anchor} style={`left:${pct(p.x, VB.w)};top:${pct(p.y + dy - 12, VB.h)}`}>
-            {p.model}
-          </span>
-        );
-      })}
-      {/*
-        anchor="end" at PLOT.x1, not "start" partway across: this label's
-        text is wider than the margin between the plot's right edge and the
-        container's, so anchoring it to extend rightward pushed a few px past
-        the chart's own box at narrower viewports and reopened the document's
-        horizontal scrollbar. Anchoring it to extend leftward, into the plot
-        area where there's room, keeps it inside the box at every width.
-      */}
-      <span class="clabel" data-emphasis data-anchor="end" style={`left:${pct(PLOT.x1, VB.w)};top:${pct(wqL.usedLine.y - 12, VB.h)}`}>
-        {`~${FIGURES.typicalUsage} typical session`}
-      </span>
-    </Fragment>
-    <RangeControl
-      slot="control"
-      label="Context window"
-      min={0}
-      max={100}
-      step={1}
-      value={0}
-      logScale
-      logMin={WQ_LOG_MIN}
-      logMax={WQ_LOG_MAX}
-      readout={wqInitial.readout}
-      hint={`Position maps log-uniformly onto ${WQ_LOG_MIN / 1000}K–${WQ_LOG_MAX / 1_000_000}M tokens, so travel is even across every decade rather than crowding into the top one.`}
-    />
-  </ChartFigure>
+<OpenChartQualityStory minHeight={420}>
 
-<ScrollyStep step={0}>
+<Fragment slot="step-0">
 
 **Outline — replace with prose.**
 
-- Introduce the axes: time along the bottom, context window on a log y-axis — both measured, not modeled.
-- Point out these are real shipped windows, GA dates from the corpus, not a smooth trend line yet.
-- Flag the excluded point: a larger window claim exists in the corpus but only as "advertises," never "GA" — left off on that basis.
-- **Chart shows:** nine dated window releases scattered by size, nothing joined yet.
+- Introduce the two lines: what the window holds, and what it is worth once quality is priced in. Both are token counts on one log axis, so the gap between them is quality loss and nothing else.
+- Start gentle on purpose — at {LABELS.mildPct} per tenfold the lines barely separate, which is the reading a sceptic would pick.
+- **Chart shows:** the two lines close together, the gap only visible at the largest windows.
 
-</ScrollyStep>
+</Fragment>
 
-<ScrollyStep step={1}>
-
-**Outline — replace with prose.**
-
-- Reveal the "largest window available to date" line and name the headline: {FIGURES.windowGrowthFactor} growth from GPT-3 to Gemini 3.1 Pro.
-- Explain why it's an envelope, not a raw join: Claude 3's smaller window follows Gemini 1.5 Pro's larger one, so joining the raw points would draw a shrinking frontier that never happened to any one buyer.
-- **Chart shows:** the max-to-date envelope line rising in steps alongside the scatter.
-
-</ScrollyStep>
-
-<ScrollyStep step={2}>
+<Fragment slot="step-1">
 
 **Outline — replace with prose.**
 
-- Reveal the flat measured usage line: a typical session runs about {FIGURES.typicalUsage} tokens, regardless of window offered.
-- Land the gap: the window line moved {FIGURES.windowGrowthFactor}; the usage line barely moved at all.
-- **Chart shows:** the flat usage line beneath the rising window envelope — the gap between them is the finding.
+- This is the measured rate. Cite it properly: retention fell {FIGURES.degradationDrop} between {DEGRADATION.points[0].tokens / 1000}K and {DEGRADATION.points[1].tokens / 1000}K tokens across 18 frontier models (Chroma, 2025); Liu et al. found {FIGURES.liuDrop} on a different task.
+- Land the headline here, not earlier: at this rate a {LABELS.large} window does the work of under four {LABELS.small} sessions, not {LABELS.naiveRatio}.
+- Name the limit of the evidence in the same breath — one decade was measured, so a constant rate across the next one is an assumption about shape, not a finding.
+- **Chart shows:** the gap opening to its measured width.
 
-</ScrollyStep>
+</Fragment>
 
-<ScrollyStep step={3}>
-
-**Outline — replace with prose.**
-
-- Cite the utilization numbers: at the largest window offered, a typical session uses only {FIGURES.lowestUtilization} of it.
-- Bring in the accuracy cost of a big window: retention drops {FIGURES.degradationDrop} from {DEGRADATION.points[0].tokens / 1000}K to {DEGRADATION.points[1].tokens / 1000}K tokens in the Chroma 2025 study (18 models); Liu et al. found a {FIGURES.liuDrop} drop on a different task.
-- Say plainly what the chart is NOT claiming: retention is interpolated between two measured anchors, not measured at every point in between.
-- **Chart shows:** the utilization table's numbers alongside the visual gap — most of a big window goes unused, and using it costs accuracy.
-
-</ScrollyStep>
-
-<ScrollyStep step={4}>
+<Fragment slot="step-2">
 
 **Outline — replace with prose.**
 
-- Hand the reader the control: drag to any window size and read the interpolated retention plus the utilization sentence.
-- Point out the honesty guard: below a real session's size, the chart refuses to state a utilization percentage at all — it says the session doesn't fit.
-- Close the section on the practical implication: a bigger window is not obviously a better deal once retention is priced in.
-- **Chart shows:** a live readout tied to the slider, no chart line moves — this section's finding is in the sentence, not a new mark.
+- Push it the other way: if degradation is worse than measured, a {LABELS.large} window is worth barely three {LABELS.small} sessions.
+- Say why this reading is worth entertaining — the measured band stops well below the windows anyone is actually buying.
+- **Chart shows:** the effective line falling away sharply from the nominal one.
 
-</ScrollyStep>
-</ScrollySection>
+</Fragment>
+
+<Fragment slot="step-3">
+
+**Outline — replace with prose.**
+
+- Hand it over: the reader sets the rate and watches the sentence underneath change with it.
+- Point out the two ends — at {LABELS.minPct} the lines coincide and window size means exactly what it says; at {LABELS.maxPct} the largest windows are worth a fraction of their spec.
+- Land the equilibrium the section is named for: a bigger window does not buy proportionally more work, and the shortfall widens the further you push it.
+
+</Fragment>
+
+</OpenChartQualityStory>
 
 ## The cost floor
 
 **Outline — replace with prose.**
 
-- State the floor claim plainly: a token costs energy and hardware time to produce, so price cannot fall to zero.
-- Cite the range: budget-tier models are floored near {FIGURES.budgetFloor} per million tokens; frontier models hold near {`$${COST_FLOOR.frontierStableLow}–${COST_FLOOR.frontierStableHigh}`}.
-- Explain why, in one sentence: {COST_FLOOR.note}
-- Land the tension this sets up: the {FIGURES.deflationFactor} price fall the post opened with cannot repeat indefinitely — this is where it has to slow down.
+- Budget-tier models are floored near {FIGURES.budgetFloor} per million tokens; frontier models hold near {`$${COST_FLOOR.frontierStableLow}–${COST_FLOOR.frontierStableHigh}`}.
+- {COST_FLOOR.note}
+- The {FIGURES.deflationFactor} fall cannot repeat indefinitely — this is where it slows.
 
 ## Budget Constraint
 
-<ScrollySection chartKey="budget" label="Measured token price decline against other metered-resource decline rates">
-  <ChartFigure
-    slot="chart"
-    ariaLabel={`Measured cheapest-available token price from 2023 to 2026 on a log scale, against comparison trajectories for other metered computing resources at their own real annual decline rates, toggled one at a time.`}
-    caption="The scatter and its envelope are the measured token price series — cheapest model available at or above GPT-4-class capability, at each date. Comparison lines are real annual decline rates for other resources, compounded over the same span."
-    takeaway={`Tokens fell ${FIGURES.tokenAnnualDecline} a year; Moore's Law falls ${FIGURES.mooreAnnualDecline}.`}
-    legend={[
-      { kind: 'measured', text: 'token price (measured, cheapest to date)' },
-      { kind: 'stylized', text: 'comparison trajectory (drawn from a real annual rate)' },
-    ]}
-    table={{
-      caption: DECLINE_COMPARISON.source,
-      head: ['Technology', 'Annual decline', 'Range', 'Timeframe'],
-      rows: DECLINE_COMPARISON.points.map((c) => [c.name, `${c.annualPct}%`, c.range, c.years]),
-    }}
-  >
-    <svg slot="svg" viewBox={`0 0 ${VB.w} ${VB.h}`} aria-hidden="true">
-      <g class="layer" data-steps="0 1 2 3">
-        <line x1={PLOT.x0} y1={PLOT.y1} x2={PLOT.x1} y2={PLOT.y1} stroke="var(--chart-axis)" vector-effect="non-scaling-stroke" />
-        {budgetTicks.map((t) => (
-          <line x1={PLOT.x0} y1={budgetYScale(t)} x2={PLOT.x1} y2={budgetYScale(t)} stroke="var(--chart-grid)" vector-effect="non-scaling-stroke" />
-        ))}
-        {budgetL.scatter.map((p) => (
-          <circle cx={p.x} cy={p.y} r="5" fill="var(--chart-mark)" />
-        ))}
-        <path d={budgetL.envelopePath} fill="none" stroke="var(--chart-mark)" stroke-width="2" vector-effect="non-scaling-stroke" />
-      </g>
-      <g class="layer" data-steps="1 2 3">
-        {budgetL.comparisons.map((c) => (
-          <path
-            d={budget.comparisonPath(c.annualPct)}
-            data-compare={String(c.annualPct)}
-            data-compare-active={c.annualPct === 23 ? '' : null}
-            fill="none"
-            stroke="var(--accent)"
-            stroke-dasharray="6 4"
-            vector-effect="non-scaling-stroke"
-          />
-        ))}
-      </g>
-    </svg>
-    <Fragment slot="labels">
-      {budgetTicks.map((t) => (
-        <span class="clabel" data-anchor="end" style={`left:${pct(PLOT.x0 - 8, VB.w)};top:${pct(budgetYScale(t), VB.h)}`}>
-          {`$${t < 1 ? t.toFixed(2) : t.toFixed(0)}`}
-        </span>
-      ))}
-      {budgetL.scatter.map((p) => {
-        // Same edge case as the window-quality chart: the most recent point
-        // in the series sits at the plot's right edge, and a centered label
-        // there runs a hair past the canvas at narrower widths.
-        const anchor = p.x >= PLOT.x1 - 1 ? 'end' : null;
-        return (
-          <span class="clabel" data-anchor={anchor} style={`left:${pct(p.x, VB.w)};top:${pct(p.y - 12, VB.h)}`}>
-            {p.label}
-          </span>
-        );
-      })}
-    </Fragment>
-    <ToggleControl
-      slot="control"
-      label="Compare token decline against"
-      options={budgetL.comparisons.map((c) => ({ value: String(c.annualPct), text: c.name }))}
-      selected="23"
-      readout={budgetInitial.readout}
-    />
-  </ChartFigure>
+<OpenChartStory
+  spec={budgetStory.spec}
+  steps={budgetStory.steps}
+  label={budgetStory.label}
+  alt={budgetStory.alt}
+  caption={budgetStory.caption}
+  source={budgetStory.source}
+  minHeight={420}
+>
 
-<ScrollyStep step={0}>
+<Fragment slot="step-0">
 
 **Outline — replace with prose.**
 
-- Introduce the measured curve alone: cheapest available token price, log scale, from GPT-4's launch to now.
-- Explain the envelope construction: the raw points are not monotonic (a later model can be pricier than an earlier one), so the line drawn is "cheapest to date," not a raw join.
-- **Chart shows:** the measured price series and its envelope, no comparison lines yet.
+- Five metered computing resources, each with a stated annual price decline, ranked.
+- **Chart shows:** all five bars, ordered by rate.
 
-</ScrollyStep>
+</Fragment>
 
-<ScrollyStep step={1}>
-
-**Outline — replace with prose.**
-
-- Bring in the toggle: four other metered computing resources, each falling at its own real annual rate.
-- Explain what a comparison line means: "had GPT-4's price fallen at this rate instead, where would it be now."
-- **Chart shows:** all four comparison trajectories, Moore's Law active by default.
-
-</ScrollyStep>
-
-<ScrollyStep step={2}>
+<Fragment slot="step-1">
 
 **Outline — replace with prose.**
 
-- Land the Moore's Law contrast: at {FIGURES.mooreAnnualDecline} a year, GPT-4's {FIGURES.startPrice} would still be several dollars today, not {FIGURES.endPrice}.
-- Name the gap in one line: tokens fell {FIGURES.tokenAnnualDecline} a year — several times faster than the fastest prior computing resource.
-- **Chart shows:** the token line diverging visibly below the Moore's Law trajectory.
+- Moore's Law as the reference at {FIGURES.mooreAnnualDecline} a year, sustained over {DECLINE_COMPARISON.points[0].years}.
+- **Chart shows:** the transistors bar held in color, the rest dropped back.
 
-</ScrollyStep>
+</Fragment>
 
-<ScrollyStep step={3}>
+<Fragment slot="step-2">
 
 **Outline — replace with prose.**
 
-- Invite toggling through the rest: AWS EC2, AWS S3, internet bandwidth — every one falls slower than tokens did.
-- Land the budget-constraint framing: this is the price collapse that relaxes the constraint the next chart is about.
-- **Chart shows:** whichever comparison the reader picks, always faint against the still-fastest-falling token line.
+- Tokens fell {FIGURES.tokenAnnualDecline} a year — several times faster than the fastest prior metered resource.
+- At {FIGURES.mooreAnnualDecline} a year, GPT-4's {FIGURES.startPrice} would still cost several dollars today, not {FIGURES.endPrice}.
+- **Chart shows:** the token bar alone in color against four grayed comparisons.
 
-</ScrollyStep>
-</ScrollySection>
+</Fragment>
+
+<Fragment slot="step-3">
+
+**Outline — replace with prose.**
+
+- The token rate is measured over {DECLINE_COMPARISON.points[4].years}, against {DECLINE_COMPARISON.points[0].years} for transistors.
+- It ranks the rates fairly; it does not predict tokens hold this rate for fifty years.
+- **Chart shows:** all bars back in color with the span caveat called out.
+
+</Fragment>
+
+</OpenChartStory>
 
 ## Jevons Paradox
 
-<ScrollySection chartKey="jevons" label="Price and revenue index diverging, with the agent-consumption ladder underneath">
-  <ChartFigure
-    slot="chart"
-    ariaLabel={`A price index falling and a revenue index rising over the same period — the measured divergence — with a bar ladder of agent-pattern token multipliers underneath, and a reader-chosen elasticity driving a live total-spending curve.`}
-    caption="Price and revenue index endpoints are measured; the curves between them are drawn, not sampled. The agent ladder below is measured token-consumption multipliers by usage pattern."
-    takeaway={`Price fell ${FIGURES.priceDrop}; revenue grew ${FIGURES.revenueGrowth} anyway.`}
-    legend={[
-      { kind: 'stylized', text: 'price / revenue index (endpoints measured, curve drawn)' },
-      { kind: 'measured', text: 'agent multiplier ladder (measured)' },
-      { kind: 'stylized', text: 'reader-chosen spending path (drawn)' },
-    ]}
-    table={{
-      caption: AGENT_MULTIPLIER.source,
-      head: ['Usage pattern', 'Tokens per session', 'Multiplier'],
-      rows: AGENT_MULTIPLIER.points.map((p) => [p.pattern, p.tokens, `${p.mult.toLocaleString('en-US')}×`]),
-    }}
-  >
-    <svg slot="svg" viewBox={`0 0 ${VB.w} ${VB.h}`} aria-hidden="true">
-      <g class="layer" data-steps="0 1 2 3 4">
-        <line x1={PLOT.x0} y1={PLOT.y0} x2={PLOT.x0} y2={PLOT.y1} stroke="var(--chart-axis)" vector-effect="non-scaling-stroke" />
-        {jevonsTicks.map((t) => (
-          <line x1={PLOT.x0} y1={jevonsYScale(t)} x2={PLOT.x1} y2={jevonsYScale(t)} stroke="var(--chart-grid)" vector-effect="non-scaling-stroke" />
-        ))}
-      </g>
-      <path class="layer" data-steps="0 1 2 3 4" d={jevonsL.pricePath} fill="none" stroke="var(--chart-mark)" stroke-width="2" vector-effect="non-scaling-stroke" />
-      <path class="layer" data-steps="1 2 3 4" d={jevonsL.revenuePath} fill="none" stroke="var(--accent)" stroke-width="2" vector-effect="non-scaling-stroke" />
-      <g class="layer" data-steps="3 4">
-        {jevonsL.ladder.map((r) => (
-          <rect x={r.x} y={r.y} width={r.w} height={r.h} fill="var(--chart-mark)" />
-        ))}
-      </g>
-      <path data-live-path class="layer" data-steps="4" d={jevonsInitial.path} fill="none" stroke="var(--accent)" stroke-width="2" stroke-dasharray="3 3" vector-effect="non-scaling-stroke" />
-    </svg>
-    <Fragment slot="labels">
-      {jevonsTicks.map((t) => (
-        <span class="clabel" data-anchor="end" style={`left:${pct(PLOT.x0 - 8, VB.w)};top:${pct(jevonsYScale(t), VB.h)}`}>
-          {t < 1 ? t.toFixed(2) : t.toFixed(0)}
-        </span>
-      ))}
-      {/*
-        data-anchor="start" here is load-bearing, not cosmetic: the default
-        centered anchor made this long label extend leftward from x0+40 far
-        enough to reach into the y-axis tick labels at x0-8 and collide with
-        "0.10". Anchoring start keeps all of the text to the right of its x.
-      */}
-      <span class="clabel" data-emphasis data-anchor="start" style={`left:${pct(PLOT.x0 + 40, VB.w)};top:${pct(jevonsYScale(jevonsL.priceIndex) - 12, VB.h)}`}>
-        {`price index, ${FIGURES.priceDrop} down`}
-      </span>
-      <span class="clabel" data-accent data-anchor="start" style={`left:${pct(PLOT.x0 + 40, VB.w)};top:${pct(jevonsYScale(jevonsL.revenueIndex) - 12, VB.h)}`}>
-        {`revenue index, ${FIGURES.revenueGrowth}`}
-      </span>
-      {/*
-        Left-anchored INSIDE the canvas at the bar's own start, not in the
-        left margin: these run up to 33 characters ("200-step autonomous
-        debug — 750×"), roughly 200px — far more than the ~56px margin a
-        short axis word fits in. Anchored "end" out in the margin, they used
-        to render leftward straight out of the figure and onto the prose
-        column underneath. Sitting just above each bar keeps them on the
-        canvas at every width without touching the bar's own fill.
-      */}
-      {jevonsL.ladder.map((r) => (
-        <span class="clabel" data-anchor="start" style={`left:${pct(r.x, VB.w)};top:${pct(r.y - 10, VB.h)}`}>
-          {`${r.pattern} — ${r.mult.toLocaleString('en-US')}×`}
-        </span>
-      ))}
-    </Fragment>
-    <RangeControl
-      slot="control"
-      label="Elasticity × 10"
-      min={-30}
-      max={0}
-      step={1}
-      value={-21}
-      readout={jevonsInitial.readout}
-      hint="Below −10 on this scale (elasticity below −1), cheaper tokens raise total spending — the Jevons condition. The measured series implies about −2.1."
-    />
-  </ChartFigure>
+<OpenChartStory
+  spec={jevonsStory.spec}
+  steps={jevonsStory.steps}
+  label={jevonsStory.label}
+  alt={jevonsStory.alt}
+  caption={jevonsStory.caption}
+  source={jevonsStory.source}
+  minHeight={460}
+>
 
-<ScrollyStep step={0}>
+<Fragment slot="step-0">
 
 **Outline — replace with prose.**
 
-- Introduce the price index alone: {FIGURES.priceDrop} fall, drawn as a curve between two measured endpoints.
-- Name the historical Jevons reference: coal efficiency rising, coal consumption rising anyway — the pattern this section tests against tokens.
-- **Chart shows:** only the falling price index curve, nothing else yet.
+- Both series set to 1.0 at March 2023 so a price collapse and a revenue climb share one log axis.
+- {FIGURES.startPrice} → {FIGURES.endPrice}, a {FIGURES.deflationFactor} fall, or {FIGURES.priceDrop} of the original price gone.
+- **Chart shows:** the price index alone, falling three orders of magnitude.
 
-</ScrollyStep>
+</Fragment>
 
-<ScrollyStep step={1}>
-
-**Outline — replace with prose.**
-
-- Reveal the revenue index: {FIGURES.revenueGrowth} growth over the same period — the scissors opening.
-- Land the paradox plainly: price down, revenue up, at the same time, for the same product.
-- **Chart shows:** both curves together, diverging in opposite directions from the same starting point.
-
-</ScrollyStep>
-
-<ScrollyStep step={2}>
+<Fragment slot="step-1">
 
 **Outline — replace with prose.**
 
-- State the implied elasticity: {FIGURES.impliedElasticity}, well past the −1 break-even point — this is what "elastic enough to raise spending" looks like numerically.
-- Name the volume growth this implies: {FIGURES.statedVolume}, arithmetic from the price fall and revenue growth, not a separate measurement.
-- **Chart shows:** the two curves' endpoints labeled with the index values behind the headline percentages.
+- Revenue over the same span: {FIGURES.revenueGrowth}, drawn as its two stated endpoints because the corpus reports nothing in between.
+- **Chart shows:** both series, diverging from the same starting index.
 
-</ScrollyStep>
+</Fragment>
 
-<ScrollyStep step={3}>
-
-**Outline — replace with prose.**
-
-- Reveal the agent ladder: where did the extra volume actually go, pattern by pattern.
-- Name the top rung: {FIGURES.agentTopMultiplier} tokens per session for a multi-agent team, against a single prompt.
-- Note the ladder bars are log-scaled — a linear bar for the top rung against the bottom would be invisible.
-- **Chart shows:** five bars, log-scaled, single prompt at the bottom and multi-agent team session filling the full width at the top.
-
-</ScrollyStep>
-
-<ScrollyStep step={4}>
+<Fragment slot="step-2">
 
 **Outline — replace with prose.**
 
-- Hand the reader the elasticity control: drag toward zero and watch the spending path flip from rising to falling.
-- Name the break-even point explicitly: exactly −1 is where total spending holds flat.
-- Close on where the real series sits: implied elasticity about −2.1, solidly in "spending rises" territory.
-- **Chart shows:** a live spending-path curve tied to the slider, ladder and scissors from earlier steps still visible underneath.
+- Revenue is price times quantity, so {FIGURES.priceDrop} off price alongside {FIGURES.revenueGrowth} revenue implies volume grew {FIGURES.statedVolume}.
+- Elasticity about {FIGURES.impliedElasticity} — below −1, so each cut raised total spending.
+- **Chart shows:** the callout naming the divergence and the implied elasticity.
 
-</ScrollyStep>
-</ScrollySection>
+</Fragment>
+
+<Fragment slot="step-3">
+
+**Outline — replace with prose.**
+
+- Where the volume went: a session that runs the model {FIGURES.agentTopMultiplier} as many times as a single prompt.
+- {JEVONS.uber}
+- **Chart shows:** the index=1 reference line.
+
+</Fragment>
+
+<Fragment slot="step-4">
+
+**Outline — replace with prose.**
+
+- The confound: {JEVONS.newProductProblem}
+- **Chart shows:** the full picture, nothing emphasized.
+
+</Fragment>
+
+</OpenChartStory>
+
+<OpenChartFigure
+  spec={agentLadder.spec}
+  alt={agentLadder.alt}
+  caption={agentLadder.caption}
+  source={agentLadder.source}
+  minHeight={380}
+/>
+
+**Outline — replace with prose.**
+
+- Nothing about the price of a token changed across these rows, only how many times the model gets called.
+- A multi-agent team session burns {AGENT_MULTIPLIER.points[4].tokens} tokens, {FIGURES.agentTopMultiplier} a single prompt.
 
 ## Who supplies this
 
 **Outline — replace with prose.**
 
-- State the capital scale: {FIGURES.capex} committed to 2026 capacity — this is not a cottage industry.
-- Contrast channel concentration: Anthropic's enterprise API share ({SUPPLY_SIDE.anthropicEnterpriseApiSharePct}%), ChatGPT's consumer share ({SUPPLY_SIDE.chatgptConsumerSharePct}%), Google's routing share ({SUPPLY_SIDE.googleRoutingSharePct}%).
-- Name the lock-in tension: {SUPPLY_SIDE.lockInConcernedPct}% say they're concerned about vendor lock-in, but only {FIGURES.couldSwitch} say they could actually switch today.
-- Cite the open-weight lag and the hosting spread: open-weight models trail the frontier by {SUPPLY_SIDE.openWeightLagMonths}; identical weights get hosted at up to a {SUPPLY_SIDE.hostingSpreadForIdenticalWeights} price spread depending on provider.
-- Land the point: supply concentration, not just elastic demand, is part of why prices haven't fallen further than they have.
+- {FIGURES.capex} committed to 2026 capacity.
+- Anthropic's enterprise API share ({SUPPLY_SIDE.anthropicEnterpriseApiSharePct}%), ChatGPT's consumer share ({SUPPLY_SIDE.chatgptConsumerSharePct}%), Google's routing share ({SUPPLY_SIDE.googleRoutingSharePct}%).
+- {SUPPLY_SIDE.lockInConcernedPct}% are concerned about lock-in; only {FIGURES.couldSwitch} could actually switch today.
+- Open-weight models trail the frontier by {SUPPLY_SIDE.openWeightLagMonths}; identical weights get hosted at up to a {SUPPLY_SIDE.hostingSpreadForIdenticalWeights} spread.
 
 ## The Thread
 
 **Outline — replace with prose.**
 
-- Recap the progression in order: PPF sets the tradeoff a provider faces → window-quality equilibrium shows what holds constant across that tradeoff → the budget constraint relaxes as price falls → Jevons explains why relaxing it doesn't save money.
-- Make the causal chain explicit: price fell {FIGURES.priceDrop} → the constraint loosened → usage grew far past the price drop → total spend grew {FIGURES.revenueGrowth} anyway.
-- Say what's classical and what's new: the frameworks are old; the token is the new good they're being applied to.
-- Land the through-line sentence the whole post has been building toward.
+- PPF sets the tradeoff → the window-quality equilibrium shows what holds constant → the budget constraint relaxes as price falls → Jevons explains why relaxing it doesn't save money.
+- Price fell {FIGURES.priceDrop} → the constraint loosened → usage grew past the price drop → total spend grew {FIGURES.revenueGrowth} anyway.
 
 ## Where this breaks
 
 **Outline — replace with prose.**
 
-- State falsifiability plainly: here are the conditions that would prove this story wrong, not just ones that would make it less tidy.
-- Walk the three falsification conditions below, one at a time, in plain language.
-- Flag the confound directly: {JEVONS.newProductProblem}
-- Land the honest caveat: this is a description of a pattern, not proof the pattern is Jevons's mechanism specifically.
+- The conditions that would prove this story wrong, not just make it less tidy.
+- {JEVONS.newProductProblem}
 
 <ul>
   {JEVONS.falsification.map((f) => (

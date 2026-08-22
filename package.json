@@ -13,6 +13,8 @@
     "@astrojs/mdx": "^7.0.2",
     "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.3",
+    "@opendata-ai/openchart-core": "^8.2.1",
+    "@opendata-ai/openchart-vanilla": "^8.2.1",
     "@tailwindcss/typography": "^0.5.20",
     "@tailwindcss/vite": "^4.3.2",
     "astro": "^7.0.6",

@@ -1,0 +1,130 @@
+/**
+ * OpenChart, wired to the site's paper-and-ink tokens.
+ *
+ * A chart is styled from two places at once: the compiled SVG takes its colors
+ * from the theme object in `src/lib/charts/theme.ts`, while the surrounding
+ * chrome — tooltip, legend, source line, focus rings — is plain DOM styled by
+ * OpenChart's own stylesheet off `--oc-*` variables. This file is the second
+ * half. Both halves read the same values, so a chart never renders a
+ * paper-white tooltip against a dark card.
+ *
+ * The variables are set on `:root` and re-set under `html.dark` rather than
+ * being aliased to `var(--card)` once, because OpenChart also reads a few of
+ * them from JS at measure time, where an unresolved alias would come back as
+ * the empty string.
+ */
+@import '@opendata-ai/openchart-vanilla/styles.css';
+
+:root {
+  --oc-bg: var(--card);
+  --oc-card: var(--card);
+  --oc-border: var(--rule);
+  --oc-gridline: var(--chart-grid);
+  --oc-axis: var(--chart-axis);
+  --oc-secondary: var(--ink-muted);
+  --oc-accent: var(--accent);
+  --oc-accent-strong: var(--accent-hover);
+  --oc-focus: var(--accent);
+  --oc-positive: #0f6b6e;
+  --oc-negative: var(--accent);
+  --oc-font-family: var(--font-sans);
+  --oc-font-mono: var(--font-mono);
+  --oc-legend-text: var(--ink-body);
+  --oc-endpoint-label-color: var(--ink-body);
+  --oc-endpoint-value-color: var(--ink);
+  --oc-endpoint-leader-color: var(--chart-axis);
+  --oc-source-computed-color: var(--ink-muted);
+  --oc-footer-computed-color: var(--ink-muted);
+  --oc-annotation-subtitle-color: var(--ink-muted);
+}
+
+html.dark {
+  --oc-positive: #42c9c2;
+}
+
+/**
+ * Widen a figure past the prose measure to the article container.
+ *
+ * `Post.astro` gives the article a wide container and caps the running text at
+ * 65ch inside it, so a figure that simply filled its parent would be stuck at
+ * text width with the extra room going to margin. This centers the figure on
+ * the container instead: `margin-left: 50%` puts its left edge on the parent's
+ * centre line, and the translate pulls it back by half its own width.
+ *
+ * Sized off the container rather than the viewport. A `vw` breakout ignores the
+ * scrollbar and drifts by ~15px on Windows, which on a bordered card reads as a
+ * figure that is not quite centred.
+ */
+.oc-breakout {
+  width: min(64rem, calc(100vw - 2rem));
+  margin-left: 50%;
+  transform: translateX(-50%);
+}
+
+/**
+ * The sticky panel's height.
+ *
+ * Tracks the viewport between two bounds rather than sitting at one fixed
+ * height. The middle term is the real value — whatever is left after the nav
+ * and the step column's breathing room — so a taller window gives the chart a
+ * taller panel instead of dead space under it.
+ *
+ * The bounds are what keep it readable at the extremes. Below `24rem` the axis
+ * chrome starts eating the plot area; above `46rem` the panel outgrows the
+ * ~52rem the chart column gets at this container width and the chart turns
+ * portrait, which is the shape this cap exists to prevent — a portrait chart
+ * spends its pixels on axis whitespace instead of on the marks.
+ *
+ * Only above `lg`, where the panel actually sticks. Below that the two columns
+ * stack and the panel pins to the top of the viewport, where a fixed height
+ * would crop the chart rather than frame it.
+ */
+@media (min-width: 64rem) {
+  .oc-panel {
+    height: clamp(24rem, calc(100vh - 10rem), 46rem);
+  }
+}
+
+/**
+ * Height reserved for a chart that has not mounted yet.
+ *
+ * The inline `min-height` a figure renders holds the page's shape while the
+ * chart bundle loads, so prose below the figure does not jump when it arrives.
+ * Once mounted the reservation is only dead space, and a chart shorter than the
+ * estimate would sit in a box with a gap under it — so the runtime adds
+ * `.oc-mounted` and the floor is dropped.
+ */
+.oc-reserve.oc-mounted {
+  min-height: 0;
+}
+
+/* Charts fade rather than pop, matching the entrance timing OpenChart uses for
+   its own marks. Suppressed under reduced motion, where a fade on a full-width
+   figure is exactly the kind of motion the preference is asking to avoid. */
+.oc-reserve.oc-mounted > * {
+  animation: oc-fade-in 300ms ease-out both;
+}
+
+@keyframes oc-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oc-reserve.oc-mounted > * {
+    animation: none;
+  }
+}
+
+/* A figure is a single exhibit; splitting one across a page break in print
+   leaves both halves unreadable. */
+@media print {
+  oc-figure,
+  oc-story {
+    break-inside: avoid;
+  }
+}
