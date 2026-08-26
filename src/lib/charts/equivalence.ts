@@ -182,7 +182,7 @@ export function windowQualitySpec(decay: number): ChartSpec {
     mark: { type: 'line', interpolate: 'monotone', strokeWidth: 2.5, point: true },
     data: rows,
     encoding: {
-      x: { field: 'date', type: 'temporal', axis: { title: null, format: '%Y' } },
+      x: { field: 'date', type: 'temporal', axis: { title: '', format: '%Y' } },
       y: {
         field: 'tokens',
         type: 'quantitative',
@@ -197,7 +197,7 @@ export function windowQualitySpec(decay: number): ChartSpec {
       ],
     },
     seriesStyles: {
-      'Effective window, after quality': { strokeDash: [6, 4] },
+      'Effective window, after quality': { lineStyle: 'dashed' },
     },
     chrome: {
       eyebrow: 'Window × quality',

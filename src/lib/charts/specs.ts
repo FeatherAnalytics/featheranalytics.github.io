@@ -203,11 +203,11 @@ export const windowStory: Story = {
     data: windowRows,
     animation: STORY_ANIMATION,
     encoding: {
-      x: { field: 'date', type: 'temporal', axis: { title: null, format: '%Y' } },
+      x: { field: 'date', type: 'temporal', axis: { title: '', format: '%Y' } },
       y: {
         field: 'tokens',
         type: 'quantitative',
-        scale: { type: 'log', domain: [1_000, 4_000_000], nice: false },
+        scale: { type: 'log', domain: [1_000, 2_000_000], nice: false },
         axis: { title: 'Tokens', format: '~s' },
       },
       color: { field: 'series', type: 'nominal' },
@@ -225,11 +225,11 @@ export const windowStory: Story = {
     // The usage series is the flat reference the window series is measured
     // against, so it reads as a rule rather than a competing trend.
     seriesStyles: {
-      'Tokens actually used': { strokeDash: [5, 4], opacity: 0.85 },
+      'Tokens actually used': { lineStyle: 'dashed', opacity: 0.85 },
     },
   },
   steps: [
-    { label: 'Windows from 2,000 tokens to 2 million', highlight: ['Window offered'] },
+    { label: 'Windows from 2,048 tokens to a million', highlight: ['Window offered'] },
     {
       label: 'The 2023–2024 jump',
       camera: { x: ['2022-11', '2024-06'] },
@@ -304,7 +304,7 @@ export const budgetStory: Story = {
         field: 'resource',
         type: 'nominal',
         sort: { field: 'annual', order: 'descending' },
-        axis: { title: null },
+        axis: { title: '' },
       },
       color: { field: 'resource', type: 'nominal' },
       tooltip: [
@@ -407,7 +407,7 @@ export const jevonsStory: Story = {
     data: jevonsRows,
     animation: STORY_ANIMATION,
     encoding: {
-      x: { field: 'date', type: 'temporal', axis: { title: null, format: '%Y' } },
+      x: { field: 'date', type: 'temporal', axis: { title: '', format: '%Y' } },
       y: {
         field: 'index',
         type: 'quantitative',
@@ -428,7 +428,7 @@ export const jevonsStory: Story = {
       subtitle: 'Both indexed to March 2023, log scale',
     },
     seriesStyles: {
-      'Revenue index': { strokeDash: [6, 4] },
+      'Revenue index': { lineStyle: 'dashed' },
     },
   },
   steps: [
@@ -502,7 +502,7 @@ export const agentLadder: { spec: ChartSpec; alt: string; caption: string; sourc
         scale: { type: 'log', domain: [1, 5_000], nice: false },
         axis: { title: 'Tokens per session, relative to a single prompt', format: '~s' },
       },
-      y: { field: 'pattern', type: 'nominal', sort: { field: 'mult', order: 'ascending' }, axis: { title: null } },
+      y: { field: 'pattern', type: 'nominal', sort: { field: 'mult', order: 'ascending' }, axis: { title: '' } },
       tooltip: [
         { field: 'pattern', type: 'nominal', title: 'Pattern' },
         { field: 'tokens', type: 'nominal', title: 'Tokens' },

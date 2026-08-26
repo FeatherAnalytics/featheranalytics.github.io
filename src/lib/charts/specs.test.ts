@@ -87,7 +87,7 @@ describe('data honesty', () => {
     // MODEL_TIERS carries `contextK: null` for Ministral 3B because no document
     // in the corpus states a window for it. A spec that coerced that to 0 would
     // plot a claim the corpus does not make.
-    const rows = (ppfStory.spec as { data: { window: string }[] }).data;
+    const rows = (ppfStory.spec as unknown as { data: { window: string }[] }).data;
     const windows = rows.map((r) => r.window);
     expect(windows).toContain('not stated');
     expect(windows).not.toContain('0K');
