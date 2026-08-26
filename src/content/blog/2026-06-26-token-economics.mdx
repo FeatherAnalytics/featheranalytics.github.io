@@ -1,0 +1,376 @@
+---
+title: AI Token Economics
+subtitle: Four concepts from microeconomics, applied to LLM context windows
+pubDate: 2026-06-26
+description: How classical microeconomic frameworks — PPF, equilibrium, budget constraints, and Jevons paradox — apply to AI token consumption.
+tags: [ai, economics]
+published: true
+---
+
+import OpenChartFigure from '../../components/chart/OpenChartFigure.astro';
+import OpenChartStory from '../../components/chart/OpenChartStory.astro';
+import OpenChartQualityStory from '../../components/chart/OpenChartQualityStory.astro';
+import { Fragment } from 'astro/jsx-runtime';
+
+import {
+  FIGURES,
+  MODEL_TIERS,
+  DECLINE_COMPARISON,
+  COST_FLOOR,
+  SUPPLY_SIDE,
+  JEVONS,
+  AGENT_MULTIPLIER,
+  DEGRADATION,
+  WINDOW_TIMELINE,
+  QUALITY_COST,
+} from '../../data/tokenomics';
+import { ppfStory, budgetStory, jevonsStory, agentLadder } from '../../lib/charts/specs';
+import { LABELS } from '../../lib/charts/equivalence';
+
+export const TIER_NAMES = ['Budget', 'Mid', 'Frontier'];
+
+The hype is everywhere and it's <a href="https://trends.google.com/explore?q=AI&date=today%205-y&geo=US">growing</a>. Blogs are pivoting almost entirely into discussing artificial intelligence ad nauseum, from engineering the <a href="https://moderndata101.substack.com/">modern data stack</a> with AI in mind to <a href="https://www.oneusefulthing.org/">professors of innovation</a> talking about this next big thing and a thousand other blogs. Or is it a million? With AI seemingly lowering the barrier to entry to just about everything, from <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12308071/">biotech</a>, <a href="https://online.hbs.edu/blog/post/ai-in-leadership">business management</a>, <a href="https://github.blog/news-insights/octoverse/what-the-fastest-growing-tools-reveal-about-how-software-is-being-built/">programming and development</a> with <a href="https://github.com/features/copilot">higher reported levels of job satisfaction</a> (<a href="https://www.featheranalytics.dev/talks/Lies,%20Damned%20Lies,%20and%20Statistics.pdf">statistics are fun</a>), <a href="https://interestingengineering.com/ai-robotics/china-grabs-top-humanoid-robot-spots">robotics</a>, <a href="https://www.composer.trade/">trading</a>, and more. I would venture to say that if you can think of it, somewhere, someone is trying to bootstrap a startup to shove AI into something. 
+
+I am always interested in seeing how economic concepts reveal themselves. From <a href="https://www.economicforces.xyz/p/an-equilibrium-perspective-on-ai">equilibrium</a> to <a href="https://www.economicforces.xyz/p/gdp-and-living-standards">living standards</a> (no, this post is not about the GDP debate) to <a href="https://paulkrugman.substack.com/p/ai-is-power-hungry">externalities</a> to <a href="https://paulkrugman.substack.com/p/why-does-everyone-hate-ai">expectations</a>, there is plenty of discussion on the possible potential impacts of AI on tomorrow and beyond. 
+
+I have used these tools since <a href="https://www.reuters.com/technology/microsoft-backed-openai-starts-release-powerful-ai-known-gpt-4-2023-03-14/">GPT-4</a> and, through that aforementioned barrier lowering, these tools have certainly helped me develop my skill set. These days I exclusively use Claude Code. Living in the terminal is the easiest way for me to use AI for what I use it for the most.
+
+What this post covers, with some (AI-generated) interactive charts, is an intersection that I am particularly interested in. This post primarily stems from two things. The first is my own personal coming-of-age as the world economy recovered from the Great Finacial Crisis, and the companies that grew to some level of dominance such as AirBnb and Uber. The second is my work experience in technology, specifically on the data side of things. 
+
+Through my own use, and frustrations, I have never lost my skepticism. What *is* the end goal of these companies? What is their incentive?
+
+## What a token costs
+
+**Outline — replace with prose.**
+
+- Cheapest ({FIGURES.cheapestTier}) to dearest ({FIGURES.dearestTier}) is a real spread across the five models on the June 2026 rate cards.
+- These are June rows, not a live catalog. Opus 4 and Sonnet 4 have since been retired from Anthropic's first-party API, so the top of the current catalog is cheaper than the dearest row here even though a tier was added above Opus.
+- Ministral 3B has no context window stated anywhere in the corpus — "not stated," not a guess.
+
+This table gives token prices and context windows from 3 providers. 
+
+<div class="not-prose">
+  <table>
+    <thead>
+      <tr>
+        <th scope="col">Model</th>
+        <th scope="col">Provider</th>
+        <th scope="col">Price ($ / M tokens, input)</th>
+        <th scope="col">Tier</th>
+        <th scope="col">Context window</th>
+      </tr>
+    </thead>
+    <tbody>
+      {MODEL_TIERS.points.map((m) => (
+        <tr>
+          <th scope="row">{m.model}</th>
+          <td>{m.provider}</td>
+          <td>{`$${m.usdIn.toFixed(2)}`}</td>
+          <td>{TIER_NAMES[m.tier - 1]}</td>
+          <td>{m.contextK === null ? 'not stated' : `${m.contextK}K`}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+
+## Producer Tradeoff (PPF)
+
+<OpenChartStory
+  spec={ppfStory.spec}
+  steps={ppfStory.steps}
+  label={ppfStory.label}
+  alt={ppfStory.alt}
+  caption={ppfStory.caption}
+  source={ppfStory.source}
+  minHeight={460}
+>
+
+<Fragment slot="step-0">
+
+**Outline — replace with prose.**
+
+- X is June 2026 input price on a log scale, real rate-card data; y is the provider's own tier band, not a quality score.
+- No numeric y-axis: no per-model quality metric exists in the corpus, so a number would fake precision.
+- **Chart shows:** all five rate-card points, colored by provider.
+
+</Fragment>
+
+<Fragment slot="step-1">
+
+**Outline — replace with prose.**
+
+- Ministral 3B at {FIGURES.cheapestTier} and Haiku 4.5 at {`$${MODEL_TIERS.points[1].usdIn.toFixed(2)}`} sit in the same budget band twenty-five times apart on price.
+- A tier is a marketing position, not a measurement — and the ordinal has stopped tracking capability too: Gemini 3.7 Flash, a mid tier, outscores Gemini 3.1 Pro on ARC-AGI-2.
+- **Chart shows:** Mistral and Anthropic held in color, Google dropped back.
+
+</Fragment>
+
+<Fragment slot="step-2">
+
+**Outline — replace with prose.**
+
+- The inversion: Google's frontier-tier model is priced below Anthropic's mid-tier one.
+- Providers are pricing against each other, not against a shared quality scale.
+- **Chart shows:** Google alone in color, with the callout naming its price.
+
+</Fragment>
+
+<Fragment slot="step-3">
+
+**Outline — replace with prose.**
+
+- The two SWE-bench Verified anchors, priced per million output tokens: {FIGURES.sweCheap} at {QUALITY_COST.points[0].swePct}%, {FIGURES.sweDear} at {QUALITY_COST.points[1].swePct}%.
+- Sixteen benchmark points separate them, and the price rises about seventy-five-fold across that span. That is the widest observable ratio and the least informative one: holding the ceiling tier fixed at 88.6 instead gives about 38x, and roughly half the difference is a new tier arriving rather than a shape changing. At DeepSeek's peak-hour rate the floor doubles and both ratios halve.
+- Cost rising steeply in the last points is the shape a PPF predicts. Say what this actually is, though — a cost schedule across a market, not a frontier over one technology, and the concavity has never been measured inside a single model.
+- The floor anchor sits in a cluster of ten models near 80 on a 500-instance benchmark, where the binomial standard error is near 1.8 points. The models in that cluster are not separable from each other. The two-order-of-magnitude price spread across them is.
+- **Chart shows:** every provider back in color with the SWE-bench cost band across the price axis.
+
+</Fragment>
+
+</OpenChartStory>
+
+## Window × Quality
+
+<OpenChartQualityStory minHeight={420}>
+
+<Fragment slot="step-0">
+
+**Outline — replace with prose.**
+
+- Introduce the two lines: what the window holds, and what it is worth once quality is priced in. Both are token counts on one log axis, so the gap between them is quality loss and nothing else.
+- Start gentle on purpose — at {LABELS.mildPct} per tenfold the lines barely separate, which is the reading a skeptic would pick.
+- **Chart shows:** the two lines close together, the gap only visible at the largest windows.
+
+</Fragment>
+
+<Fragment slot="step-1">
+
+**Outline — replace with prose.**
+
+- This is the measured rate, and the date is part of the finding: retention fell {FIGURES.degradationDrop} between {DEGRADATION.points[0].tokens / 1000}K and {DEGRADATION.points[1].tokens / 1000}K tokens across 18 frontier models (Chroma, 2025); Liu et al. found {FIGURES.liuDrop} on a different task.
+- Present it as a 2025 measurement, not as the current state of the world. Every study behind it tested models released in 2023, 2024 or 2025, and no 2026 replication has been published.
+- What has moved since: on MRCR v2 8-needle at one million tokens, one generation of Claude Sonnet took retrieval accuracy from 18.5 to 65.8, and Claude Opus 4.6 reaches 76.0. An architectural constant does not do that, so the degradation rate is demonstrably movable. It is not reliably moving — one lineage, one benchmark, single runs with no published variance, and dropping the Claude row leaves the Gemini line improving 9.9 points across two generations.
+- What survives unchanged is that quality still falls with depth in every model measured. Gemini 3.1 Pro loses 58.6 points between 128 thousand and one million tokens, inside its own advertised window.
+- Land the headline here, not earlier: at this rate a {LABELS.large} window does the work of under four {LABELS.small} sessions, not {LABELS.naiveRatio}.
+- Name the limit of the evidence in the same breath — one decade was measured, so a constant rate across the next one is an assumption about shape, not a finding.
+- **Chart shows:** the gap opening to its measured width.
+
+</Fragment>
+
+<Fragment slot="step-2">
+
+**Outline — replace with prose.**
+
+- Push it the other way: if degradation is worse than measured, a {LABELS.large} window is worth barely three {LABELS.small} sessions.
+- Say why this reading is worth entertaining — the measured band stops well below the windows anyone is actually buying.
+- **Chart shows:** the effective line falling away sharply from the nominal one.
+
+</Fragment>
+
+<Fragment slot="step-3">
+
+**Outline — replace with prose.**
+
+- Hand it over: the reader sets the rate and watches the sentence underneath change with it.
+- Point out the two ends — at {LABELS.minPct} the lines coincide and window size means exactly what it says; at {LABELS.maxPct} the largest windows are worth a fraction of their spec.
+- Land the equilibrium the section is named for: a bigger window does not buy proportionally more work, and the shortfall widens the further you push it.
+
+</Fragment>
+
+</OpenChartQualityStory>
+
+## The cost floor
+
+**Outline — replace with prose.**
+
+- Budget-tier models are floored near {FIGURES.budgetFloor} per million tokens; frontier models hold near {`$${COST_FLOOR.frontierStableLow}–${COST_FLOOR.frontierStableHigh}`}.
+- {COST_FLOOR.note}
+- Both halves of the floor are now reached rather than predicted. The budget band has been touched and not breached, and the model that touches it is open weights on commodity hosting rather than a lab flagship. Eight models from five providers on two continents sit inside the frontier band, which is three dollars wide.
+- The {FIGURES.deflationFactor} fall is a cheapest-available-SKU chain with capability held fixed at neither end, so it is not the price of a constant level of capability falling that far. Name which quantity it measures before saying anything about whether it can repeat.
+- Where the slowdown is actually visible: twelve SKUs held their exact rates from June to August, the next round of savings is expected from routing, caching and batching rather than per-token cuts, and several of the cheapest headline rates carry published expiry dates — introductory pricing with a scheduled step-up, not a deflating commodity.
+
+## Budget Constraint
+
+<OpenChartStory
+  spec={budgetStory.spec}
+  steps={budgetStory.steps}
+  label={budgetStory.label}
+  alt={budgetStory.alt}
+  caption={budgetStory.caption}
+  source={budgetStory.source}
+  minHeight={420}
+>
+
+<Fragment slot="step-0">
+
+**Outline — replace with prose.**
+
+- Five metered computing resources, each with a stated annual price decline, ranked.
+- **Chart shows:** all five bars, ordered by rate.
+
+</Fragment>
+
+<Fragment slot="step-1">
+
+**Outline — replace with prose.**
+
+- Moore's Law as the reference at {FIGURES.mooreAnnualDecline} a year, sustained over {DECLINE_COMPARISON.points[0].years}.
+- **Chart shows:** the transistors bar held in color, the rest dropped back.
+
+</Fragment>
+
+<Fragment slot="step-2">
+
+**Outline — replace with prose.**
+
+- Tokens fell {FIGURES.tokenAnnualDecline} a year — the fastest of the five, but by about half again on bandwidth rather than by a multiple. This is the frontier flagship rate; a buyer willing to run the cheapest capable SKU saw roughly 85 percent a year, and one figure cannot stand for both.
+- Percentage declines do not divide. Put each series on a continuous exponential rate and the frontier falls at about 0.64x the fastest decade of Moore's Law — slower than semiconductors, not faster.
+- At {FIGURES.mooreAnnualDecline} a year, GPT-4's {FIGURES.startPrice} would still cost between nine and seventeen dollars today rather than {FIGURES.endPrice} — with the caveat that the two ends of that comparison are not the same capability, since the cheap end is a budget SKU.
+- **Chart shows:** the token bar alone in color against four grayed comparisons.
+
+</Fragment>
+
+<Fragment slot="step-3">
+
+**Outline — replace with prose.**
+
+- The token rate is measured over {DECLINE_COMPARISON.points[4].years}, against {DECLINE_COMPARISON.points[0].years} for transistors. It is also a two-point annualization with no residual, standard error, or test behind it, across a window a Chow test says is not one regime.
+- The comparison is not like for like, and the caveat belongs here. Moore's low end is a quality-adjusted hedonic index; the token figure is a cheapest-available-SKU chain whose capability changes at every link, which absorbs capability decline into measured price decline and flatters tokens.
+- So the ranking is indicative and the sign is reliable. It does not predict tokens hold this rate for fifty years, and it does not put the five series on a shared basis.
+- **Chart shows:** all bars back in color with the span caveat called out.
+
+</Fragment>
+
+</OpenChartStory>
+
+## Jevons Paradox
+
+<OpenChartStory
+  spec={jevonsStory.spec}
+  steps={jevonsStory.steps}
+  label={jevonsStory.label}
+  alt={jevonsStory.alt}
+  caption={jevonsStory.caption}
+  source={jevonsStory.source}
+  minHeight={460}
+>
+
+<Fragment slot="step-0">
+
+**Outline — replace with prose.**
+
+- Both series set to 1.0 at March 2023 so a price collapse and a revenue climb share one log axis.
+- Two chains run from that anchor and they are not one measurement. Cheapest available SKU goes {FIGURES.startPrice} → {FIGURES.endPrice}, a {FIGURES.deflationFactor} fall, with capability held fixed at neither end. The frontier flagship goes from the same anchor to four dollars, which is the {FIGURES.priceDrop} figure — and that four-dollar rate is promotional, with list pricing due in November 2026.
+- The indexed price line is the frontier chain, so {FIGURES.priceDrop} is the number that belongs beside it. Do not put both chains in one sentence as though they described a single fall.
+- **Chart shows:** the price index alone, falling three orders of magnitude.
+
+</Fragment>
+
+<Fragment slot="step-1">
+
+**Outline — replace with prose.**
+
+- Revenue over the same span: {FIGURES.revenueGrowth}, drawn as its two stated endpoints because the corpus reports nothing in between.
+- The range is the corpus's own unresolved disagreement about one firm's annualized run rate, not a confidence band around a single figure — and annualized run rate is self-reported and unaudited.
+- **Chart shows:** both series, diverging from the same starting index.
+
+</Fragment>
+
+<Fragment slot="step-2">
+
+**Outline — replace with prose.**
+
+- Revenue is price times quantity, so {FIGURES.priceDrop} off price alongside {FIGURES.revenueGrowth} revenue implies volume grew by roughly 240x. That is what the two inputs jointly imply, not a measurement — the corpus declines to use this division for volume, because it sets two firms' revenue against an enterprise-category spend figure over different years on different bases.
+- What is measured instead is {FIGURES.statedVolume} over 24 months, from tokens processed as disclosed at three consecutive Google I/O keynotes. Disclosed rather than inferred, one firm, composition not held fixed across a window in which image, video and audio tokens became a large share, and billed and unbilled volume not separated — so it cannot be multiplied by a price to recover revenue.
+- The two figures disagree, and the disagreement is the substance of this step. The elasticity the divided aggregates imply is {FIGURES.impliedElasticity}, far past the backfire threshold. The one published estimate — Demirer, Fradkin, Tadelis and Peng, NBER Working Paper 34608 — puts the short-run price elasticity just above one in magnitude.
+- The measured figure is also not the parameter the argument needs, and that cuts the other way from how it first reads. It is identified from price variation across providers serving the same model, so it recovers a cross-host substitution elasticity and bounds the market-level parameter from above. The market-level figure a Jevons claim is about is probably below one and has never been estimated by anyone. No point estimate or standard error appears in the reachable version of the paper.
+- Do not write that each cut raised total spending. Apply the measured elasticity to the observed price path and the price channel alone accounts for a volume rise on the order of 7-8x against the {FIGURES.statedVolume} observed. The paper's own authors conclude that short-run Jevons is unlikely to operate at the market level.
+- **Chart shows:** the callout naming the divergence and the implied elasticity — implied is the word that has to survive into the prose.
+
+</Fragment>
+
+<Fragment slot="step-3">
+
+**Outline — replace with prose.**
+
+- Where the volume went: a session that runs the model {FIGURES.agentTopMultiplier} as many times as a single prompt.
+- Keep the unit visible, because it is doing most of the work in that number. It compares a whole session against one prompt, not a session against a session. The median chat session runs thirteen rounds, and the measured aggregate across all traffic on the largest observable platform is 5x.
+- Volume and spend have come apart. More than 85 percent of agentic tokens are cache reads billed at roughly a tenth of standard input, so a 5x token multiplier corresponds to about a 1.2x revenue multiplier. The volume reading of this ladder is much stronger than the revenue reading.
+- {JEVONS.uber}
+- **Chart shows:** the index=1 reference line.
+
+</Fragment>
+
+<Fragment slot="step-4">
+
+**Outline — replace with prose.**
+
+- The confound: {JEVONS.newProductProblem}
+- Which is where the section has to land: the framing is descriptive rather than causal. Capability and workflow adoption supplied most of the demand growth, and the thesis is not falsified so much as stripped of its causal claim.
+- **Chart shows:** the full picture, nothing emphasized.
+
+</Fragment>
+
+</OpenChartStory>
+
+<OpenChartFigure
+  spec={agentLadder.spec}
+  alt={agentLadder.alt}
+  caption={agentLadder.caption}
+  source={agentLadder.source}
+  minHeight={380}
+/>
+
+**Outline — replace with prose.**
+
+- Nothing about the price of a token changed across these rows, only how many times the model gets called.
+- A multi-agent team session burns {AGENT_MULTIPLIER.points[4].tokens} tokens, {FIGURES.agentTopMultiplier} a single prompt.
+- Every multiplier here is the center of a range the corpus states as a range — the top row is 2,000-5,000x — and measured run-to-run variance on an identical, fully specified agentic task is up to 30x, wider than any range in the table. Carry the variance rather than the range.
+
+## Who supplies this
+
+**Outline — replace with prose.**
+
+- {FIGURES.capex} guided for 2026 capacity — guidance, not committed spend, against actuals of roughly 231 billion dollars in 2024 and 361 billion in 2025. Guidance in this cycle has been revised up every quarter, and Microsoft reports fiscal years while the other three report calendar years, so the combined figure mixes bases.
+- Every share here needs its date read with it and none is current. Anthropic's enterprise API share ({SUPPLY_SIDE.anthropicEnterpriseApiSharePct}%) is the December 2025 survey, the most recent that exists. ChatGPT's consumer share ({SUPPLY_SIDE.chatgptConsumerSharePct}%) is Similarweb web-visit share for May 2026, down about 25 points year over year, and cuts of the same data disagree by roughly 7 points depending on the denominator. Google's routing share ({SUPPLY_SIDE.googleRoutingSharePct}%) is a 2025 figure that could not be re-sourced for 2026 at all.
+- {SUPPLY_SIDE.lockInConcernedPct}% are concerned about lock-in; only {FIGURES.couldSwitch} could actually switch today. Use the direction and nothing more: this is a vendor-run survey with no published sampling frame or question wording, asking about cloud and end-user computing generally rather than about AI.
+- Open-weight models trail the frontier by {SUPPLY_SIDE.openWeightLagMonths} on the early-2026 figure. Measured in August the gap is three index points to the best open weights outright, ten points to the best a large buyer can deploy without negotiating a license, and thirty-nine points for a buyer who cannot deploy Chinese-origin weights at all — no credible substitution threat, and no effective floor.
+- Identical weights get hosted at up to a {SUPPLY_SIDE.hostingSpreadForIdenticalWeights} spread. That range spans three open-weight models rather than bounding one, and it compresses toward 2x on newer models with fewer hosts — backwards from what live price competition would predict, which points at stale unrepriced SKUs at premium providers rather than at rivalry.
+
+## The Thread
+
+**Outline — replace with prose.**
+
+- PPF sets the tradeoff → the window-quality equilibrium shows the gain from a bigger window is sublinear rather than proportional → the budget constraint relaxes as price falls → Jevons describes what happened after it relaxed without explaining why.
+- That last link is the one to get right. The collection's own falsification criteria say its first call was wrong: capability and workflow adoption did most of the causal work, and the price channel accounts for 7-8x of the {FIGURES.statedVolume} move. The price fall was necessary rather than sufficient.
+- Price fell {FIGURES.priceDrop} → the constraint loosened → usage grew far past the price drop → total spend grew {FIGURES.revenueGrowth} anyway. Add the part nobody wrote in advance: more than 85 percent of agentic tokens became cache reads, so cost per unit of agentic work fell by close to an order of magnitude with no fall in token counts. That strengthens the volume claim and weakens the revenue claim.
+
+## Where this breaks
+
+**Outline — replace with prose.**
+
+- The conditions that would prove this story wrong, not just make it less tidy — and they are scored now, not merely listed. Three were stated in June, a fourth was added in August, and each carries its own verdict below.
+- Two things the list cannot carry on its own. A fifth condition, geopolitical bifurcation of the model supply chain, belongs in the set and cannot be scored from market-internal evidence at all. And what actually happened is a condition nobody wrote in advance: agentic tokens became overwhelmingly cache reads, which strengthens the volume claim and weakens the revenue claim — the opposite pairing from what the third condition contemplated.
+- {JEVONS.newProductProblem}
+
+<ul>
+  {JEVONS.falsification.map((f) => (
+    <li>{f}</li>
+  ))}
+</ul>
+
+## Sources
+
+Research documents cited throughout, from the corpus's local collection rather than public URLs:
+
+- Doc 00, "LLM Token Economics: Consolidated Summary"
+- Doc 01, "Tokens as a Scarce Resource"
+- Doc 02, "The Cost Structure of a Token"
+- Doc 03, "The Production Possibility Frontier"
+- Doc 04, "Budget Constraints"
+- Doc 05, "The Window-Quality Equilibrium"
+- Doc 06, "Jevons Paradox and the Token Demand Spiral"
+- Doc 07, "Supply-Side Economics of the Token Market"
+
+Full corpus: [FeatherAnalytics/research — tokenomics](https://github.com/FeatherAnalytics/research/tree/main/tokenomics)
