@@ -1,44 +1,14 @@
 ---
-import Page from '../layouts/Page.astro';
-import ProjectCard from '../components/ProjectCard.astro';
-import FeaturedProject from '../components/FeaturedProject.astro';
-import { cinemetrics } from '../data/featured';
-
-const projects = [
-  {
-    title: 'Capital Flow Cityscape',
-    description: 'A 3D cityscape where buildings represent financial securities, districts represent asset classes, and the flows of capital between them become visible paths through a living city. Generates a unique city on every page load — share a specific city via seed URL.',
-    tags: ['Three.js', 'Procedural Generation'],
-    href: 'https://www.featheranalytics.dev/capital-flows-city/',
-  },
-  {
-    title: 'UrbanStack',
-    description: 'A multi-layer urban data platform combining transportation, infrastructure spending, walkability, demographics, and economic data for major US cities.',
-    tags: ['Next.js', 'deck.gl', 'DuckDB', 'Python'],
-    href: 'https://www.featheranalytics.dev/urbanstack',
-  },
-  {
-    title: 'World Cup 2026: Where Players Come From',
-    description: "An interactive map exploring where every player in the 2026 FIFA World Cup was born versus which national team they represent. Nearly 1 in 4 players represents a country they weren't born in.",
-    tags: ['Next.js', 'deck.gl', 'MapLibre', 'Python'],
-    href: 'https://www.featheranalytics.dev/worldcup-2026',
-  },
-  {
-    title: "Coach's Challenge",
-    description: 'Grades every NFL coaching decision against 27 years of EPA-optimal baselines. Interactive scatter plots, sortable rankings, and per-team game logs reveal which coaches leave the most points on the field.',
-    tags: ['Next.js', 'Recharts', 'DuckDB', 'Python'],
-    href: 'https://www.featheranalytics.dev/coaches-challenge',
-  },
-];
+import Base from '../layouts/Base.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
 ---
-<Page title="Projects" subtitle="Data visualizations and tools" description="Data visualization projects by David Hardage — an eight-year film analytics pipeline, 3D capital flows, urban data platforms, and interactive maps.">
-  <div class="not-prose">
-    <FeaturedProject {...cinemetrics} />
+<Base title="Projects" description="Data visualization projects by David Hardage.">
+  <div class="flex flex-col min-h-screen">
+    <Nav />
+    <main class="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 py-12">
+      <p>Redirecting to <a href="/#projects">projects</a>.</p>
+    </main>
+    <Footer />
   </div>
-  <h2 class="eyebrow text-ink-muted mt-10 mb-4 not-prose">More Projects</h2>
-  <div class="space-y-4 not-prose">
-    {projects.map(project => (
-      <ProjectCard {...project} />
-    ))}
-  </div>
-</Page>
+</Base>

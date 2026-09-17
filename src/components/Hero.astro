@@ -1,0 +1,137 @@
+---
+import months from '../data/zone-history-months.json';
+---
+<section class="max-w-6xl mx-auto px-4 sm:px-6 min-h-[calc(100svh-4rem)] grid grid-cols-1 lg:grid-cols-2 items-center gap-8 py-12">
+  <div class="order-2 lg:order-1">
+    <h1 class="display text-[clamp(3.5rem,8vw,7rem)]">
+      David<br />Hardage
+    </h1>
+    <p class="mt-6 text-lg text-ink-body">
+      <a href="https://znhstry.com" target="_blank" rel="noopener noreferrer" class="hover:text-accent transition-colors">
+        Fourteen years of a mobile game, one barb per month.
+      </a>
+    </p>
+  </div>
+  <div id="feather-wrap" class="order-1 lg:order-2 relative w-[90vw] max-w-[500px] lg:w-full mx-auto">
+    <svg id="feather-svg" viewBox="0 0 400 700" class="w-full h-[65svh] min-h-[400px] cursor-pointer" role="img" aria-label="A feather drawn from fourteen years of Zone History data, one barb per month"></svg>
+    <div id="feather-tooltip" class="hidden absolute z-10 max-w-[min(240px,90vw)] px-3 py-2 rounded-lg border border-rule bg-card text-ink-body text-sm pointer-events-none shadow-sm"></div>
+  </div>
+</section>
+
+<style>
+  html.dark #feather-svg line[data-leading="legion"] {
+    filter: drop-shadow(0 0 3px var(--accent));
+  }
+</style>
+
+<script is:inline define:vars={{ months }}>
+  const svg = document.getElementById('feather-svg');
+  const tooltip = document.getElementById('feather-tooltip');
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const NS = 'http://www.w3.org/2000/svg';
+
+  const VIEW_H = 700;
+  const CX = 200;
+  const START_Y = 30;
+  const END_Y = VIEW_H - 30;
+  const MAX_BARB = 170;
+  const BARB_ANGLE = (30 * Math.PI) / 180;
+
+  const logs = months.map(m => Math.log1p(m.events));
+  const maxLog = Math.max(...logs);
+  const spacing = (END_Y - START_Y) / months.length;
+
+  function leading(m) {
+    if (m.legion >= m.swarm && m.legion >= m.faceless) return 'legion';
+    if (m.swarm >= m.legion && m.swarm >= m.faceless) return 'swarm';
+    return 'faceless';
+  }
+  const COLOR = { legion: 'var(--accent)', swarm: 'var(--ink-body)', faceless: 'var(--ink-muted)' };
+
+  const spine = document.createElementNS(NS, 'line');
+  spine.setAttribute('x1', CX); spine.setAttribute('x2', CX);
+  spine.setAttribute('y1', START_Y - 10); spine.setAttribute('y2', END_Y + 10);
+  spine.setAttribute('stroke', 'var(--ink-muted)');
+  spine.setAttribute('stroke-width', '3');
+  spine.setAttribute('stroke-linecap', 'round');
+  svg.appendChild(spine);
+
+  const barbs = months.map((m, i) => {
+    const norm = logs[i] / maxLog;
+    const len = Math.max(4, norm * MAX_BARB);
+    const y = START_Y + i * spacing;
+    const side = i % 2 === 0 ? -1 : 1;
+    const line = document.createElementNS(NS, 'line');
+    line.setAttribute('x1', CX); line.setAttribute('y1', y);
+    line.setAttribute('x2', CX + Math.cos(BARB_ANGLE) * len * side);
+    line.setAttribute('y2', y - Math.sin(BARB_ANGLE) * len);
+    line.setAttribute('stroke', COLOR[leading(m)]);
+    line.setAttribute('stroke-width', Math.max(2.5, norm * 5));
+    line.setAttribute('stroke-linecap', 'round');
+    line.setAttribute('opacity', '0');
+    line.dataset.leading = leading(m);
+    svg.appendChild(line);
+    return { el: line, y };
+  });
+
+  function drawIn() {
+    barbs.forEach((b, i) => {
+      b.el.style.transition = '';
+      b.el.setAttribute('opacity', '0');
+      if (reducedMotion) { b.el.setAttribute('opacity', '1'); return; }
+      setTimeout(() => {
+        b.el.style.transition = 'opacity 150ms ease-out';
+        b.el.setAttribute('opacity', '1');
+      }, (i / barbs.length) * 1500);
+    });
+  }
+
+  let started = false;
+  const observer = new IntersectionObserver(entries => {
+    if (started || !entries.some(e => e.isIntersecting)) return;
+    started = true;
+    drawIn();
+    observer.disconnect();
+  }, { threshold: 0.5 });
+  observer.observe(svg);
+
+  function svgY(e) {
+    const rect = svg.getBoundingClientRect();
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return ((clientY - rect.top) / rect.height) * VIEW_H;
+  }
+  function nearest(y) {
+    let best = 0, bestDist = Infinity;
+    barbs.forEach((b, i) => { const d = Math.abs(b.y - y); if (d < bestDist) { bestDist = d; best = i; } });
+    return best;
+  }
+  function highlight(idx) {
+    barbs.forEach((b, i) => b.el.setAttribute('opacity', idx < 0 || i === idx ? '1' : '0.3'));
+  }
+  function showTooltip(idx, e) {
+    const m = months[idx];
+    const [yr, mo] = m.month.split('-');
+    tooltip.innerHTML = `<strong>${MONTH_NAMES[Number(mo) - 1]} ${yr}</strong><br>${m.events.toLocaleString('en-US')} events<br>Legion ${m.legion.toFixed(1)}% · Swarm ${m.swarm.toFixed(1)}% · Faceless ${m.faceless.toFixed(1)}%`;
+    tooltip.classList.remove('hidden');
+    const wrap = svg.parentElement.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    let tx = clientX - wrap.left + 14;
+    let ty = clientY - wrap.top - 10;
+    if (tx + 240 > wrap.width) tx -= 260;
+    if (ty < 0) ty = 10;
+    tooltip.style.left = `${tx}px`;
+    tooltip.style.top = `${ty}px`;
+  }
+  function clear() { tooltip.classList.add('hidden'); highlight(-1); }
+  function move(e) { const idx = nearest(svgY(e)); highlight(idx); showTooltip(idx, e); }
+
+  let dragging = false;
+  svg.addEventListener('mousemove', move);
+  svg.addEventListener('mouseleave', clear);
+  svg.addEventListener('click', () => { clear(); drawIn(); });
+  svg.addEventListener('touchstart', e => { dragging = false; move(e); }, { passive: true });
+  svg.addEventListener('touchmove', e => { dragging = true; move(e); }, { passive: true });
+  svg.addEventListener('touchend', e => { e.preventDefault(); clear(); if (!dragging) drawIn(); dragging = false; });
+</script>
