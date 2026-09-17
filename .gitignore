@@ -22,3 +22,9 @@ CLAUDE.md
 
 # rtk
 .rtk/
+
+# Superpowers plugin state
+.superpowers/
+
+# Local prototypes
+design/prototypes/
