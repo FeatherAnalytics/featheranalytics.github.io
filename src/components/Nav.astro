@@ -2,18 +2,33 @@
 import ThemeToggle from './ThemeToggle.astro';
 
 const navLinks = [
-  { text: 'About', href: '/about' },
-  { text: 'Projects', href: '/projects' },
+  { text: 'Home', href: '/' },
   { text: 'Talks', href: '/talks' },
-  { text: 'Blog', href: '/blog' },
+  { text: 'About', href: '/about' },
 ];
 
 const currentPath = Astro.url.pathname;
+const isActive = (href: string) => (href === '/' ? currentPath === '/' : currentPath.startsWith(href));
 ---
 <nav class="sticky top-0 z-50 bg-paper/85 backdrop-blur-sm border-b border-rule">
-  <div class="max-w-3xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-    <a href="/" class="font-display text-ink font-bold text-lg tracking-tight hover:text-accent transition-colors">
-      FeatherAnalytics
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+    <a href="/" class="flex items-center gap-2 font-display text-ink font-bold text-lg tracking-tight hover:text-accent transition-colors">
+      <svg class="h-5 w-5" aria-hidden="true" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 2 Q15.5 16 16 30" stroke-width="1.5"/>
+        <path d="M16 5 L11 7.5" stroke-width="1"/>
+        <path d="M16 6.5 L21.5 9" stroke-width="1"/>
+        <path d="M16 8.5 L8 12" stroke-width="1.1"/>
+        <path d="M16 10 L24 13.5" stroke-width="1.1"/>
+        <path d="M16 12 L6.5 16.5" stroke-width="1.2"/>
+        <path d="M16 14 L25 18.5" stroke-width="1.2"/>
+        <path d="M16 16 L5.5 21" stroke-width="1.2"/>
+        <path d="M16 18 L26 23" stroke-width="1.2"/>
+        <path d="M16 20 L7 25" stroke-width="1.1"/>
+        <path d="M16 22 L24.5 27" stroke-width="1.1"/>
+        <path d="M16 24 L9 28" stroke-width="1"/>
+        <path d="M16 26 L22 29.5" stroke-width="1"/>
+      </svg>
+      Feather
     </a>
 
     <div class="flex items-center gap-1">
@@ -22,9 +37,7 @@ const currentPath = Astro.url.pathname;
           href={link.href}
           class:list={[
             'px-3 py-2 rounded-lg text-sm font-medium transition-colors hidden sm:block',
-            currentPath.startsWith(link.href)
-              ? 'text-accent'
-              : 'text-ink-muted hover:text-ink',
+            isActive(link.href) ? 'text-accent' : 'text-ink-muted hover:text-ink',
           ]}
         >
           {link.text}
@@ -35,9 +48,11 @@ const currentPath = Astro.url.pathname;
         id="mobile-menu-btn"
         type="button"
         aria-label="Open menu"
-        class="sm:hidden p-2 rounded-lg text-ink-muted hover:text-ink transition-colors"
+        aria-expanded="false"
+        aria-controls="mobile-menu"
+        class="sm:hidden min-h-11 min-w-11 flex items-center justify-center rounded-lg text-ink-muted hover:text-ink transition-colors"
       >
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <path d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       </button>
@@ -50,10 +65,8 @@ const currentPath = Astro.url.pathname;
         <a
           href={link.href}
           class:list={[
-            'block px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-            currentPath.startsWith(link.href)
-              ? 'text-accent'
-              : 'text-ink-muted hover:text-ink',
+            'block px-3 py-3 rounded-lg text-sm font-medium transition-colors',
+            isActive(link.href) ? 'text-accent' : 'text-ink-muted hover:text-ink',
           ]}
         >
           {link.text}
@@ -64,10 +77,10 @@ const currentPath = Astro.url.pathname;
 </nav>
 
 <script is:inline>
-  document.getElementById('mobile-menu-btn').addEventListener('click', () => {
-    document.getElementById('mobile-menu').classList.toggle('hidden');
-  });
-  document.addEventListener('astro:after-swap', () => {
-    document.getElementById('mobile-menu').classList.add('hidden');
+  const menuButton = document.getElementById('mobile-menu-btn');
+  const menu = document.getElementById('mobile-menu');
+  menuButton.addEventListener('click', () => {
+    const open = menu.classList.toggle('hidden') === false;
+    menuButton.setAttribute('aria-expanded', String(open));
   });
 </script>
