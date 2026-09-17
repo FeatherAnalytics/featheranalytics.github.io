@@ -100,6 +100,12 @@ html {
   font-family: var(--font-sans);
   color: var(--ink-body);
   background-color: var(--well);
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 ::selection {
@@ -120,6 +126,17 @@ pre {
   line-height: 1.4;
   text-transform: uppercase;
   letter-spacing: 0.12em;
+}
+
+/* Bricolage's optical-size and width axes only engage when set explicitly;
+   without them the display face reads like a slightly quirky Geist. */
+.display {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 96, "wdth" 75;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 0.9;
+  color: var(--ink);
 }
 
 /* Prose colors come from the same tokens, so blog and page bodies flip with
