@@ -147,5 +147,5 @@ import months from '../data/zone-history-months.json';
   svg.addEventListener('click', () => { clear(); drawIn(); });
   svg.addEventListener('touchstart', e => { dragging = false; move(e); }, { passive: true });
   svg.addEventListener('touchmove', e => { dragging = true; move(e); }, { passive: true });
-  svg.addEventListener('touchend', e => { e.preventDefault(); clear(); if (!dragging) drawIn(); dragging = false; });
+  svg.addEventListener('touchend', e => { if (e.cancelable) e.preventDefault(); clear(); if (!dragging) drawIn(); dragging = false; });
 </script>
