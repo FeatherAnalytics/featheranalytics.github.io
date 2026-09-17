@@ -26,8 +26,8 @@ export const zoneHistory: Headliner = {
   eyebrow: 'Zone History',
   title: 'Fourteen years of territory, scrubbed in the browser.',
   description:
-    'Every zone of the mobile game QONQR, 2.68 million of them, across 14 years of faction control, compressed so a visitor can drag to any date and watch control shift in well under a second, served as static Parquet with DuckDB running in the browser.',
-  proofPoints: ['13.7B cells made linear', '526 ms to scrub eleven years'],
+    'All 2.68 million zones from the mobile game QONQR, visualized across 14 years and counting. Served as Parquet with DuckDB in the browser, plus a query page for self-service analysis.',
+  proofPoints: ['13.7B cells made linear', 'Published Parquet marts, queryable without a clone'],
   stack: ['Python', 'polars', 'DuckDB', 'dbt', 'Next.js', 'deck.gl', 'Cloudflare'],
   href: 'https://znhstry.com',
   linkText: 'Open znhstry.com',
@@ -39,7 +39,7 @@ export const cinemetrics: Headliner = {
   eyebrow: 'cinemetrics',
   title: 'Eight years of film-watching, end to end',
   description:
-    'A full analytics pipeline over my own Letterboxd history. I enrich the ratings from the TMDB and OMDb APIs, model them in DuckDB with dbt, and serve the result as a static cross-filtered dashboard with an ML recommendation engine, all from a CI runner and your browser.',
+    'A full analytics pipeline over my own Letterboxd history. Data is enriched from the TMDB and OMDb APIs and modeled in DuckDB with dbt. The result is a static, cross-filtered dashboard with an ML recommendation engine, built in CI and served from your browser.',
   proofPoints: [
     'Every chart responds to every filter in real time and every view generates a shareable URL.',
     'A GitHub Action pulls new ratings every day, retrains the embeddings, and redeploys.',
