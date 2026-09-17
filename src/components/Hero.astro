@@ -4,7 +4,7 @@ import months from '../data/zone-history-months.json';
 <section class="max-w-6xl mx-auto px-4 sm:px-6 min-h-[calc(100svh-4rem)] grid grid-cols-1 lg:grid-cols-2 items-center gap-8 py-12">
   <div class="order-2 lg:order-1">
     <h1 class="display text-ink leading-[0.9] text-[clamp(3.5rem,8vw,7rem)]">
-      David<br class="aria-hidden" /> Hardage
+      David<br /> Hardage
     </h1>
     <p class="mt-6 text-lg text-ink-body">Analytics engineer. I build data pipelines and the visualizations on top of them.</p>
   </div>
@@ -105,16 +105,19 @@ import months from '../data/zone-history-months.json';
   }, { threshold: 0.5 });
   observer.observe(svg);
 
-  function svgY(e) {
+  function svgPoint(e) {
     const pt = svg.createSVGPoint();
-    const src = e.touches ? e.touches[0] : e;
+    const src = e.changedTouches?.[0] ?? e.touches?.[0] ?? e;
     pt.x = src.clientX;
     pt.y = src.clientY;
-    return pt.matrixTransform(svg.getScreenCTM().inverse()).y;
+    const svgPt = pt.matrixTransform(svg.getScreenCTM().inverse());
+    return { x: svgPt.x, y: svgPt.y, src };
   }
 
-  function nearest(y) {
-    return Math.max(0, Math.min(barbs.length - 1, Math.round((y - START_Y) / spacing)));
+  function nearest(x, y) {
+    const spineY = y + Math.tan(BARB_ANGLE) * Math.abs(x - CX);
+    if (spineY < START_Y - spacing || spineY > END_Y + spacing) return -1;
+    return Math.max(0, Math.min(barbs.length - 1, Math.round((spineY - START_Y) / spacing)));
   }
 
   function formatMonth(m) {
@@ -133,10 +136,9 @@ import months from '../data/zone-history-months.json';
     });
   }
 
-  function positionTooltip(e) {
+  function positionTooltip(src) {
     tooltip.classList.remove('hidden');
     const wrap = svg.parentElement.getBoundingClientRect();
-    const src = e.touches ? e.touches[0] : e;
     let tx = src.clientX - wrap.left + 14;
     let ty = src.clientY - wrap.top - 10;
     if (tx + 320 > wrap.width) tx -= 340;
@@ -146,13 +148,13 @@ import months from '../data/zone-history-months.json';
     tooltip.style.top = `${ty}px`;
   }
 
-  function showSingleTooltip(idx, e) {
+  function showSingleTooltip(idx, src) {
     const m = months[idx];
     tooltip.innerHTML = `<strong>${formatMonth(m)}</strong><br>${m.events.toLocaleString('en-US')} events<br>Legion ${m.legion.toFixed(1)}% &middot; Swarm ${m.swarm.toFixed(1)}% &middot; Faceless ${m.faceless.toFixed(1)}%`;
-    positionTooltip(e);
+    positionTooltip(src);
   }
 
-  function showCompareTooltip(hoverIdx, e) {
+  function showCompareTooltip(hoverIdx, src) {
     const p = months[pinnedIdx];
     const h = months[hoverIdx];
     const rows = [
@@ -167,7 +169,7 @@ import months from '../data/zone-history-months.json';
       html += `<br>${label}: ${pv} &rarr; <span style="color:${color}">${hv}</span>`;
     }
     tooltip.innerHTML = html;
-    positionTooltip(e);
+    positionTooltip(src);
   }
 
   function pin(idx) {
@@ -180,21 +182,26 @@ import months from '../data/zone-history-months.json';
 
   function move(e) {
     if (revealing) return;
-    const idx = nearest(svgY(e));
+    const { x, y, src } = svgPoint(e);
+    const idx = nearest(x, y);
+    if (idx < 0) { clearHover(); return; }
     highlightWithPin(idx);
     if (pinnedIdx >= 0 && idx !== pinnedIdx) {
-      showCompareTooltip(idx, e);
+      showCompareTooltip(idx, src);
     } else {
-      showSingleTooltip(pinnedIdx >= 0 ? pinnedIdx : idx, e);
+      showSingleTooltip(pinnedIdx >= 0 ? pinnedIdx : idx, src);
     }
   }
 
   function clearHover() {
+    tooltip.classList.add('hidden');
     if (pinnedIdx < 0) {
-      tooltip.classList.add('hidden');
       highlightWithPin(-1);
     } else {
-      highlightWithPin(-1);
+      barbs.forEach((b, i) => {
+        b.el.setAttribute('opacity', '1');
+        b.el.setAttribute('stroke-width', i === pinnedIdx ? b.baseStrokeWidth + 3 : b.baseStrokeWidth);
+      });
     }
   }
 
@@ -202,15 +209,23 @@ import months from '../data/zone-history-months.json';
   svg.addEventListener('mouseleave', clearHover);
   svg.addEventListener('click', (e) => {
     if (revealing) return;
-    const idx = nearest(svgY(e));
-    if (pinnedIdx === idx) {
+    const { x, y, src } = svgPoint(e);
+    const idx = nearest(x, y);
+    if (idx < 0 || pinnedIdx === idx) {
       unpin();
       tooltip.classList.add('hidden');
       highlightWithPin(-1);
     } else {
       pin(idx);
-      showSingleTooltip(idx, e);
+      showSingleTooltip(idx, src);
       highlightWithPin(idx);
+    }
+  });
+  document.addEventListener('click', (e) => {
+    if (pinnedIdx >= 0 && !svg.contains(e.target)) {
+      unpin();
+      tooltip.classList.add('hidden');
+      highlightWithPin(-1);
     }
   });
 
@@ -220,8 +235,9 @@ import months from '../data/zone-history-months.json';
   svg.addEventListener('touchend', e => {
     if (e.cancelable) e.preventDefault();
     if (!dragging) {
-      const idx = nearest(svgY(e));
-      if (pinnedIdx === idx) {
+      const { x, y } = svgPoint(e);
+      const idx = nearest(x, y);
+      if (idx < 0 || pinnedIdx === idx) {
         unpin();
         tooltip.classList.add('hidden');
         highlightWithPin(-1);
