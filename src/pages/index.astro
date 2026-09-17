@@ -1,64 +1,70 @@
 ---
+import { Image } from 'astro:assets';
 import Base from '../layouts/Base.astro';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
-import ProjectCard from '../components/ProjectCard.astro';
-import FeaturedProject from '../components/FeaturedProject.astro';
-import { cinemetrics } from '../data/featured';
-
-const featuredProjects = [
-  {
-    title: 'Capital Flow Cityscape',
-    description: 'A 3D cityscape where buildings represent financial securities and capital flows become visible paths through a living city. Unique city every page load.',
-    tags: ['Three.js', 'Procedural Generation'],
-    href: 'https://www.featheranalytics.dev/capital-flows-city/',
-  },
-  {
-    title: 'UrbanStack',
-    description: 'Multi-layer urban data platform combining transportation, infrastructure, walkability, and demographic data for major US cities.',
-    tags: ['Next.js', 'deck.gl', 'DuckDB'],
-    href: 'https://www.featheranalytics.dev/urbanstack',
-  },
-  {
-    title: 'World Cup 2026',
-    description: 'Interactive map exploring where every player was born versus which national team they represent.',
-    tags: ['Next.js', 'deck.gl', 'MapLibre'],
-    href: 'https://www.featheranalytics.dev/worldcup-2026',
-  },
-  {
-    title: "Coach's Challenge",
-    description: 'NFL coaching decision quality analyzer — grades play-calling against 27 years of EPA-optimal baselines.',
-    tags: ['Next.js', 'Recharts', 'DuckDB'],
-    href: 'https://www.featheranalytics.dev/coaches-challenge',
-  },
-];
+import Hero from '../components/Hero.astro';
+import RatingsConstellation from '../components/RatingsConstellation.astro';
+import ProjectRow from '../components/ProjectRow.astro';
+import { zoneHistory, zoneHistoryImage, cinemetrics, projects } from '../data/featured';
 ---
-<Base title="Home" description="Feather — data projects, talks, and writing by David Hardage.">
+<Base title="Home" description="Personal site of David Hardage — data pipelines and visualizations.">
   <div class="flex flex-col min-h-screen">
     <Nav />
     <main class="flex-1">
-      <section class="max-w-3xl mx-auto px-4 sm:px-6 pt-16 pb-12">
-        <h1 class="font-display text-4xl sm:text-5xl font-bold tracking-tight text-ink">
-          David Hardage
-        </h1>
-        <p class="mt-4 text-lg text-ink-body max-w-2xl">
-          Senior Analytics Engineer in Texas. I build data visualizations and write about tech, economics, and data.
-        </p>
-      </section>
+      <Hero />
 
-      <section class="max-w-3xl mx-auto px-4 sm:px-6 pb-12">
-        <FeaturedProject {...cinemetrics} />
-      </section>
-
-      <section class="max-w-3xl mx-auto px-4 sm:px-6 pb-16">
-        <h2 class="eyebrow text-ink-muted mb-4">
-          More Projects
-        </h2>
-        <div class="space-y-4">
-          {featuredProjects.map(project => (
-            <ProjectCard {...project} />
-          ))}
+      <section class="max-w-6xl mx-auto px-4 sm:px-6 py-20 grid grid-cols-1 lg:grid-cols-[60%_1fr] gap-8 lg:gap-12 items-center">
+        <Image
+          src={zoneHistoryImage}
+          alt="Zone History map showing faction control across the world"
+          widths={[640, 960, 1280]}
+          sizes="(min-width: 1024px) 60vw, 100vw"
+          format="webp"
+          class="w-full rounded-lg border border-rule"
+        />
+        <div>
+          <p class="eyebrow text-accent">{zoneHistory.eyebrow}</p>
+          <h2 class="display text-ink mt-3 text-3xl sm:text-4xl">{zoneHistory.title}</h2>
+          <p class="mt-5 text-ink-body">{zoneHistory.description}</p>
+          <ul class="mt-5 space-y-1.5 text-sm text-ink-body">
+            {zoneHistory.proofPoints.map(point => (
+              <li class="flex gap-2.5"><span class="text-accent shrink-0" aria-hidden="true">&mdash;</span><span>{point}</span></li>
+            ))}
+          </ul>
+          <p class="mt-5 eyebrow text-ink-muted">{zoneHistory.stack.join(' · ')}</p>
+          <a href={zoneHistory.href} target="_blank" rel="noopener noreferrer" class="inline-block mt-6 link-accent">
+            {zoneHistory.linkText} &nearr;
+          </a>
         </div>
+      </section>
+
+      <section class="max-w-6xl mx-auto px-4 sm:px-6 py-20 grid grid-cols-1 lg:grid-cols-[1fr_60%] gap-8 lg:gap-12 items-center">
+        <div class="order-2 lg:order-1">
+          <p class="eyebrow text-accent">{cinemetrics.eyebrow}</p>
+          <h2 class="display text-ink mt-3 text-3xl sm:text-4xl">{cinemetrics.title}</h2>
+          <p class="mt-5 text-ink-body">{cinemetrics.description}</p>
+          <ul class="mt-5 space-y-1.5 text-sm text-ink-body">
+            {cinemetrics.proofPoints.map(point => (
+              <li class="flex gap-2.5"><span class="text-accent shrink-0" aria-hidden="true">&mdash;</span><span>{point}</span></li>
+            ))}
+          </ul>
+          <p class="mt-5 eyebrow text-ink-muted">{cinemetrics.stack.join(' · ')}</p>
+          <a href={cinemetrics.href} target="_blank" rel="noopener noreferrer" class="inline-block mt-6 link-accent">
+            {cinemetrics.linkText} &nearr;
+          </a>
+        </div>
+        <div class="order-1 lg:order-2">
+          <RatingsConstellation />
+        </div>
+      </section>
+
+      <section id="projects" class="max-w-6xl mx-auto px-4 sm:px-6 py-20">
+        <h2 class="eyebrow text-ink-muted border-b border-rule pb-3">Other Projects</h2>
+        {projects.map(project => <ProjectRow {...project} />)}
+        <p class="mt-10 text-ink-body">
+          I also give casual <a href="/talks" class="link-accent">talks</a> to friends and colleagues on whatever I'm thinking about at the time.
+        </p>
       </section>
     </main>
     <Footer />

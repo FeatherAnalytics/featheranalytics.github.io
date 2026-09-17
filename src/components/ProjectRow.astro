@@ -1,0 +1,27 @@
+---
+import { Image } from 'astro:assets';
+import type { Project } from '../data/featured';
+
+type Props = Project;
+const { title, description, stack, href, image } = Astro.props;
+---
+<a
+  href={href}
+  target="_blank"
+  rel="noopener noreferrer"
+  class="group grid grid-cols-1 md:grid-cols-[30%_1fr] gap-4 md:gap-8 py-8 border-b border-rule"
+>
+  <Image
+    src={image}
+    alt={`${title} screenshot`}
+    widths={[640, 1280]}
+    sizes="(min-width: 768px) 30vw, 100vw"
+    format="webp"
+    class="w-full aspect-[4/3] object-cover rounded-lg border border-rule group-hover:border-accent duration-150 transition-colors"
+  />
+  <div class="flex flex-col justify-center">
+    <h3 class="display text-2xl sm:text-3xl group-hover:text-accent duration-150 transition-colors">{title}</h3>
+    <p class="mt-2 text-ink-body">{description}</p>
+    <p class="mt-3 eyebrow text-ink-muted">{stack.join(' · ')} <span class="text-accent" aria-hidden="true">&nearr;</span></p>
+  </div>
+</a>

@@ -1,0 +1,253 @@
+---
+import months from '../data/zone-history-months.json';
+---
+<section class="max-w-6xl mx-auto px-4 sm:px-6 min-h-[calc(100svh-4rem)] grid grid-cols-1 lg:grid-cols-2 items-center gap-8 py-12">
+  <div class="order-2 lg:order-1">
+    <h1 class="display text-ink leading-[0.9] text-[clamp(3.5rem,8vw,7rem)]">
+      David<br /> Hardage
+    </h1>
+    <p class="mt-6 text-lg text-ink-body">Analytics engineer. I build data pipelines and the visualizations on top of them.</p>
+  </div>
+  <div id="feather-wrap" class="order-1 lg:order-2 relative w-[90vw] max-w-[500px] lg:w-full mx-auto">
+    <svg id="feather-svg" viewBox="0 0 400 700" class="w-full h-[65svh] min-h-[400px]" role="img" aria-label="A feather drawn from fourteen years of Zone History data, one barb per month"></svg>
+    <div id="feather-tooltip" class="hidden absolute z-10 max-w-[min(320px,90vw)] px-3 py-2 rounded-lg border border-rule bg-card text-ink-body text-sm pointer-events-none shadow-sm"></div>
+    <p class="mt-2 text-left lg:text-right">
+      <a href="https://znhstry.com" target="_blank" rel="noopener noreferrer" class="eyebrow text-ink-muted hover:text-accent transition-colors">
+        Fourteen years of a mobile game &middot; Zone History &nearr;
+      </a>
+    </p>
+  </div>
+</section>
+
+<style is:global>
+  html.dark #feather-svg line[data-leading="legion"] {
+    filter: drop-shadow(0 0 3px var(--accent));
+  }
+</style>
+
+<script is:inline define:vars={{ months }}>
+  const svg = document.getElementById('feather-svg');
+  const tooltip = document.getElementById('feather-tooltip');
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const NS = 'http://www.w3.org/2000/svg';
+
+  const VIEW_H = 700;
+  const CX = 200;
+  const START_Y = 30;
+  const END_Y = VIEW_H - 30;
+  const MAX_BARB = 170;
+  const BARB_ANGLE = (30 * Math.PI) / 180;
+
+  const logs = months.map(m => Math.log1p(m.events));
+  const maxLog = Math.max(...logs);
+  const spacing = (END_Y - START_Y) / months.length;
+
+  function leading(m) {
+    if (m.legion >= m.swarm && m.legion >= m.faceless) return 'legion';
+    if (m.swarm >= m.legion && m.swarm >= m.faceless) return 'swarm';
+    return 'faceless';
+  }
+  const COLOR = { legion: 'var(--accent)', swarm: 'var(--ink-body)', faceless: 'var(--ink-muted)' };
+
+  const spine = document.createElementNS(NS, 'line');
+  spine.setAttribute('x1', CX); spine.setAttribute('x2', CX);
+  spine.setAttribute('y1', START_Y - 10); spine.setAttribute('y2', END_Y + 10);
+  spine.setAttribute('stroke', 'var(--ink-muted)');
+  spine.setAttribute('stroke-width', '3');
+  spine.setAttribute('stroke-linecap', 'round');
+  svg.appendChild(spine);
+
+  const barbs = months.map((m, i) => {
+    const norm = logs[i] / maxLog;
+    const len = Math.max(4, norm * MAX_BARB);
+    const y = START_Y + i * spacing;
+    const side = i % 2 === 0 ? -1 : 1;
+    const lead = leading(m);
+    const sw = Math.max(2.5, norm * 5);
+    const line = document.createElementNS(NS, 'line');
+    line.setAttribute('x1', CX); line.setAttribute('y1', y);
+    line.setAttribute('x2', CX + Math.cos(BARB_ANGLE) * len * side);
+    line.setAttribute('y2', y - Math.sin(BARB_ANGLE) * len);
+    line.setAttribute('stroke', COLOR[lead]);
+    line.setAttribute('stroke-width', sw);
+    line.setAttribute('stroke-linecap', 'round');
+    line.setAttribute('opacity', '0');
+    line.dataset.leading = lead;
+    svg.appendChild(line);
+    return { el: line, y, baseStrokeWidth: sw };
+  });
+
+  let timers = [];
+  let revealing = false;
+  function drawIn() {
+    timers.forEach(clearTimeout);
+    timers = [];
+    revealing = true;
+    barbs.forEach((b, i) => {
+      b.el.style.transition = '';
+      b.el.setAttribute('opacity', '0');
+      if (reducedMotion) { b.el.setAttribute('opacity', '1'); return; }
+      timers.push(setTimeout(() => {
+        b.el.style.transition = 'opacity 150ms ease-out';
+        b.el.setAttribute('opacity', '1');
+        if (i === barbs.length - 1) revealing = false;
+      }, (i / barbs.length) * 1500));
+    });
+    if (reducedMotion) revealing = false;
+  }
+
+  let started = false;
+  const observer = new IntersectionObserver(entries => {
+    if (started || !entries.some(e => e.isIntersecting)) return;
+    started = true;
+    drawIn();
+    observer.disconnect();
+  }, { threshold: 0.5 });
+  observer.observe(svg);
+
+  function svgPoint(e) {
+    const pt = svg.createSVGPoint();
+    const src = e.changedTouches?.[0] ?? e.touches?.[0] ?? e;
+    pt.x = src.clientX;
+    pt.y = src.clientY;
+    const svgPt = pt.matrixTransform(svg.getScreenCTM().inverse());
+    return { x: svgPt.x, y: svgPt.y, src };
+  }
+
+  function nearest(x, y) {
+    const spineY = y + Math.tan(BARB_ANGLE) * Math.abs(x - CX);
+    if (spineY < START_Y - spacing || spineY > END_Y + spacing) return -1;
+    return Math.max(0, Math.min(barbs.length - 1, Math.round((spineY - START_Y) / spacing)));
+  }
+
+  function formatMonth(m) {
+    const [yr, mo] = m.month.split('-');
+    return new Date(Date.UTC(Number(yr), Number(mo) - 1)).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+  }
+
+  let pinnedIdx = -1;
+
+  function highlightWithPin(hoverIdx) {
+    if (revealing) return;
+    barbs.forEach((b, i) => {
+      const active = i === hoverIdx || i === pinnedIdx;
+      b.el.setAttribute('opacity', (hoverIdx < 0 && pinnedIdx < 0) || active ? '1' : '0.3');
+      b.el.setAttribute('stroke-width', i === pinnedIdx ? b.baseStrokeWidth + 3 : b.baseStrokeWidth);
+    });
+  }
+
+  function positionTooltip(src) {
+    tooltip.classList.remove('hidden');
+    const wrap = svg.parentElement.getBoundingClientRect();
+    let tx = src.clientX - wrap.left + 14;
+    let ty = src.clientY - wrap.top - 10;
+    if (tx + 320 > wrap.width) tx -= 340;
+    tx = Math.max(0, Math.min(tx, wrap.width - (tooltip.offsetWidth || 320)));
+    if (ty < 0) ty = 10;
+    tooltip.style.left = `${tx}px`;
+    tooltip.style.top = `${ty}px`;
+  }
+
+  function showSingleTooltip(idx, src) {
+    const m = months[idx];
+    tooltip.innerHTML = `<strong>${formatMonth(m)}</strong><br>${m.events.toLocaleString('en-US')} events<br>Legion ${m.legion.toFixed(1)}% &middot; Swarm ${m.swarm.toFixed(1)}% &middot; Faceless ${m.faceless.toFixed(1)}%`;
+    positionTooltip(src);
+  }
+
+  function showCompareTooltip(hoverIdx, src) {
+    const p = months[pinnedIdx];
+    const h = months[hoverIdx];
+    const rows = [
+      ['Events', p.events.toLocaleString('en-US'), h.events.toLocaleString('en-US'), h.events > p.events],
+      ['Legion', p.legion.toFixed(1) + '%', h.legion.toFixed(1) + '%', h.legion > p.legion],
+      ['Swarm', p.swarm.toFixed(1) + '%', h.swarm.toFixed(1) + '%', h.swarm > p.swarm],
+      ['Faceless', p.faceless.toFixed(1) + '%', h.faceless.toFixed(1) + '%', h.faceless > p.faceless],
+    ];
+    let html = `<strong>${formatMonth(p)} &rarr; ${formatMonth(h)}</strong>`;
+    for (const [label, pv, hv, higher] of rows) {
+      const color = higher ? 'var(--accent)' : 'var(--ink-muted)';
+      html += `<br>${label}: ${pv} &rarr; <span style="color:${color}">${hv}</span>`;
+    }
+    tooltip.innerHTML = html;
+    positionTooltip(src);
+  }
+
+  function pin(idx) {
+    pinnedIdx = idx;
+  }
+
+  function unpin() {
+    pinnedIdx = -1;
+  }
+
+  function move(e) {
+    if (revealing) return;
+    const { x, y, src } = svgPoint(e);
+    const idx = nearest(x, y);
+    if (idx < 0) { clearHover(); return; }
+    highlightWithPin(idx);
+    if (pinnedIdx >= 0 && idx !== pinnedIdx) {
+      showCompareTooltip(idx, src);
+    } else {
+      showSingleTooltip(pinnedIdx >= 0 ? pinnedIdx : idx, src);
+    }
+  }
+
+  function clearHover() {
+    tooltip.classList.add('hidden');
+    if (pinnedIdx < 0) {
+      highlightWithPin(-1);
+    } else {
+      barbs.forEach((b, i) => {
+        b.el.setAttribute('opacity', '1');
+        b.el.setAttribute('stroke-width', i === pinnedIdx ? b.baseStrokeWidth + 3 : b.baseStrokeWidth);
+      });
+    }
+  }
+
+  svg.addEventListener('mousemove', move);
+  svg.addEventListener('mouseleave', clearHover);
+  svg.addEventListener('click', (e) => {
+    if (revealing) return;
+    const { x, y, src } = svgPoint(e);
+    const idx = nearest(x, y);
+    if (idx < 0 || pinnedIdx === idx) {
+      unpin();
+      tooltip.classList.add('hidden');
+      highlightWithPin(-1);
+    } else {
+      pin(idx);
+      showSingleTooltip(idx, src);
+      highlightWithPin(idx);
+    }
+  });
+  document.addEventListener('click', (e) => {
+    if (pinnedIdx >= 0 && !svg.contains(e.target)) {
+      unpin();
+      tooltip.classList.add('hidden');
+      highlightWithPin(-1);
+    }
+  });
+
+  let dragging = false;
+  svg.addEventListener('touchstart', e => { dragging = false; move(e); }, { passive: true });
+  svg.addEventListener('touchmove', e => { dragging = true; move(e); }, { passive: true });
+  svg.addEventListener('touchend', e => {
+    if (e.cancelable) e.preventDefault();
+    if (!dragging) {
+      const { x, y } = svgPoint(e);
+      const idx = nearest(x, y);
+      if (idx < 0 || pinnedIdx === idx) {
+        unpin();
+        tooltip.classList.add('hidden');
+        highlightWithPin(-1);
+      } else {
+        pin(idx);
+        highlightWithPin(idx);
+      }
+    } else {
+      clearHover();
+    }
+    dragging = false;
+  });
+</script>

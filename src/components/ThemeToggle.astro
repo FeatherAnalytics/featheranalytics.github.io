@@ -4,7 +4,7 @@
   id="theme-toggle"
   type="button"
   aria-label="Toggle dark mode"
-  class="p-2 rounded-lg text-ink-muted hover:text-ink transition-colors"
+  class="min-h-11 min-w-11 flex items-center justify-center rounded-lg text-ink-muted hover:text-ink transition-colors"
 >
   <svg id="sun-icon" class="w-5 h-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
     <circle cx="12" cy="12" r="5" />
@@ -38,5 +38,4 @@
     applyTheme(next);
   });
 
-  document.addEventListener('astro:after-swap', () => applyTheme(getThemePreference()));
 </script>

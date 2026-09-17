@@ -10,6 +10,7 @@ export default defineConfig({
   // until it moved to znhstry.com. Old links and search results still land here.
   redirects: {
     '/znhstry': 'https://znhstry.com',
+    '/projects': '/#projects',
   },
   vite: {
     plugins: [tailwindcss()],

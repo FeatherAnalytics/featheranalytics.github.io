@@ -1,24 +1,31 @@
 ---
 import Page from '../layouts/Page.astro';
-import TalkCard from '../components/TalkCard.astro';
 
 const talks = [
-  { title: 'Lies, Damned Lies, and Statistics', description: "How statistics can mislead, from sampling bias to survivorship bias to Simpson's paradox.", href: '/talks/Lies, Damned Lies, and Statistics.pdf' },
-  { title: 'Big Mac Index', description: "The Economist's Big Mac Index — using burger prices to explore purchasing power parity and global economics.", href: '/talks/Big Mac Index.pdf' },
-  { title: 'Game Theory for Engineers', description: 'Practical game theory concepts applied to everyday decision-making and engineering trade-offs.', href: '/talks/Game-Theory-for-Engineers.pdf' },
-  { title: 'Dictator for a Day', description: 'A thought experiment: if I had absolute power for one year, what economic policies would I enact on day one?', href: '/talks/Dictator-for-a-Day.pdf' },
-  { title: 'The Math of English', description: "The mathematical patterns hiding inside the English language from letter frequencies to Zipf's law.", href: '/talks/Math-of-English.pdf' },
-  { title: 'Time is a Social Construct', description: 'How humans invented time zones, calendars, and the surprisingly arbitrary way we measure time.', href: '/talks/Time is a Social Construct.pdf' },
-  { title: 'A Brief History of Tattoos', description: '5,000 years of tattoo culture from Ötzi the Iceman to modern ink.', href: '/talks/A Brief History of Tattoos.pdf' },
-  { title: 'A Brief History of Ultrarunning', description: 'The origins and evolution of ultramarathon running.', href: '/talks/A Brief History of Ultrarunning.pdf' },
-  { title: 'A Brief History of Pet Domestication', description: 'How wolves became dogs, wildcats became house cats, and other animals joined the household.', href: '/talks/A Brief History of Pet Domestication.pdf' },
+  { title: 'Lies, Damned Lies, and Statistics', description: "How statistics can mislead, from sampling bias to survivorship bias to Simpson's paradox.", href: '/talks/lies-damned-lies-and-statistics.pdf' },
+  { title: 'Big Mac Index', description: "The Economist's Big Mac Index — using burger prices to explore purchasing power parity and global economics.", href: '/talks/big-mac-index.pdf' },
+  { title: 'Game Theory for Engineers', description: 'Practical game theory concepts applied to everyday decision-making and engineering trade-offs.', href: '/talks/game-theory-for-engineers.pdf' },
+  { title: 'Dictator for a Day', description: 'A thought experiment: if I had absolute power for one year, what economic policies would I enact on day one?', href: '/talks/dictator-for-a-day.pdf' },
+  { title: 'The Math of English', description: "The mathematical patterns hiding inside the English language from letter frequencies to Zipf's law.", href: '/talks/math-of-english.pdf' },
+  { title: 'Time is a Social Construct', description: 'How humans invented time zones, calendars, and the surprisingly arbitrary way we measure time.', href: '/talks/time-is-a-social-construct.pdf' },
+  { title: 'A Brief History of Tattoos', description: '5,000 years of tattoo culture from Ötzi the Iceman to modern ink.', href: '/talks/a-brief-history-of-tattoos.pdf' },
+  { title: 'A Brief History of Ultrarunning', description: 'The origins and evolution of ultramarathon running.', href: '/talks/a-brief-history-of-ultrarunning.pdf' },
+  { title: 'A Brief History of Pet Domestication', description: 'How wolves became dogs, wildcats became house cats, and other animals joined the household.', href: '/talks/a-brief-history-of-pet-domestication.pdf' },
 ];
 ---
-<Page title="Talks" subtitle="Ted Talk presentations" description="Workplace Ted Talk presentations by David Hardage on topics from statistics and game theory to tattoo history.">
-  <p class="mb-6">A collection of short presentations I've given at work. These are casual "Ted Talk"-style explorations of topics I find interesting.</p>
-  <div class="space-y-3 not-prose">
+<Page title="Talks" description="Informal talks by David Hardage for friends and colleagues, on topics from statistics and game theory to tattoo history.">
+  <p class="mb-8">Casual presentations on whatever I'm thinking about at the time, given to friends and colleagues.</p>
+  <ul class="not-prose divide-y divide-rule border-t border-b border-rule">
     {talks.map(talk => (
-      <TalkCard {...talk} />
+      <li>
+        <a href={talk.href} target="_blank" rel="noopener noreferrer" class="group block py-5 flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
+          <div>
+            <h2 class="font-display text-lg font-semibold tracking-tight text-ink group-hover:text-accent transition-colors">{talk.title}</h2>
+            <p class="mt-1 text-sm text-ink-body">{talk.description}</p>
+          </div>
+          <span class="eyebrow shrink-0 text-accent">Slides (PDF)</span>
+        </a>
+      </li>
     ))}
-  </div>
+  </ul>
 </Page>

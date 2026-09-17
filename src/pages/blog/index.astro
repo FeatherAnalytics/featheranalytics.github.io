@@ -13,9 +13,9 @@ const posts = (await getCollection('blog'))
     <div class="space-y-6 not-prose">
       {posts.map(post => (
         <a href={`/blog/${post.id}`} class="group block p-5 rounded-lg border border-rule bg-card hover:border-accent transition-colors">
-          <h3 class="font-display text-lg font-semibold tracking-tight text-ink group-hover:text-accent transition-colors">
+          <h2 class="font-display text-lg font-semibold tracking-tight text-ink group-hover:text-accent transition-colors">
             {post.data.title}
-          </h3>
+          </h2>
           {post.data.subtitle && (
             <p class="mt-1 text-ink-muted text-sm">{post.data.subtitle}</p>
           )}
