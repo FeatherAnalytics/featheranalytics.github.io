@@ -144,6 +144,7 @@ pre {
   color: var(--accent);
   text-decoration: underline;
   text-underline-offset: 4px;
+  transition: color 150ms ease;
 }
 .link-accent:hover {
   color: var(--accent-hover);

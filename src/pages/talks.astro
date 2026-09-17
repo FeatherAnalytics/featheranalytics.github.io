@@ -15,14 +15,16 @@ const talks = [
 ---
 <Page title="Talks" description="Informal talks by David Hardage for friends and colleagues, on topics from statistics and game theory to tattoo history.">
   <p class="mb-8">Informal talks I give to friends and colleagues on whatever I've been reading about. Slides only, no recordings.</p>
-  <ul class="not-prose divide-y divide-rule border-t border-rule">
+  <ul class="not-prose divide-y divide-rule border-t border-b border-rule">
     {talks.map(talk => (
-      <li class="py-5 flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
-        <div>
-          <h2 class="font-display text-lg font-semibold tracking-tight text-ink">{talk.title}</h2>
-          <p class="mt-1 text-sm text-ink-body">{talk.description}</p>
-        </div>
-        <a href={talk.href} target="_blank" rel="noopener noreferrer" aria-label={`${talk.title} slides (PDF)`} class="eyebrow shrink-0 link-accent">Slides (PDF)</a>
+      <li>
+        <a href={talk.href} target="_blank" rel="noopener noreferrer" class="group block py-5 flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
+          <div>
+            <h2 class="font-display text-lg font-semibold tracking-tight text-ink group-hover:text-accent transition-colors">{talk.title}</h2>
+            <p class="mt-1 text-sm text-ink-body">{talk.description}</p>
+          </div>
+          <span class="eyebrow shrink-0 text-accent">Slides (PDF)</span>
+        </a>
       </li>
     ))}
   </ul>
