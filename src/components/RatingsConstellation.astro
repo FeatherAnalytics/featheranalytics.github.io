@@ -1,0 +1,115 @@
+---
+import watches from '../data/cinemetrics-watches.json';
+---
+<figure class="relative w-full">
+  <div id="constellation-wrap" class="relative w-full h-[60svh] min-h-[320px] max-h-[560px]">
+    <canvas id="constellation-canvas" class="w-full h-full" role="img" aria-label="Every film logged since 2019 by watch date and rating, horror films highlighted"></canvas>
+    <div id="constellation-tooltip" class="hidden absolute z-10 max-w-[min(280px,90vw)] px-3 py-2 rounded-lg border border-rule bg-card text-ink-body text-sm pointer-events-none shadow-sm"></div>
+  </div>
+  <figcaption class="mt-3 text-ink-muted">Every film I've logged since 2019, horror in red.</figcaption>
+</figure>
+
+<script is:inline define:vars={{ watches }}>
+  const canvas = document.getElementById('constellation-canvas');
+  const ctx = canvas.getContext('2d');
+  const tooltip = document.getElementById('constellation-tooltip');
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const PAD = { top: 20, bottom: 40, left: 20, right: 20 };
+  const Y_MIN = 20, Y_MAX = 100;
+  const DURATION = 1500;
+
+  let seed = 42;
+  function rand() { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
+  const points = watches.map(w => ({ ...w, date: new Date(w.watched), jx: (rand() - 0.5) * 3, jy: (rand() - 0.5) * 8 }));
+  const minDate = new Date('2019-01-01');
+  const lastWatch = points.reduce((max, p) => (p.date > max ? p.date : max), minDate);
+  const maxDate = new Date(lastWatch.getFullYear() + 1, 0, 1);
+  const dateRange = maxDate - minDate;
+
+  function token(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+  function resize() {
+    const rect = canvas.parentElement.getBoundingClientRect();
+    canvas.width = rect.width * devicePixelRatio;
+    canvas.height = rect.height * devicePixelRatio;
+    ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  }
+
+  function plot(w, h) { return { w: w - PAD.left - PAD.right, h: h - PAD.top - PAD.bottom }; }
+  function pos(p, w, h) {
+    const { w: pw, h: ph } = plot(w, h);
+    const t = (p.date - minDate + p.jx * 86400000 * 30) / dateRange;
+    const x = PAD.left + Math.max(0, Math.min(1, t)) * pw;
+    const yNorm = (Math.max(Y_MIN, Math.min(Y_MAX, p.rating + p.jy)) - Y_MIN) / (Y_MAX - Y_MIN);
+    return { x, y: PAD.top + ph - yNorm * ph };
+  }
+
+  let progress = reducedMotion ? 1 : 0;
+  function draw() {
+    const w = canvas.width / devicePixelRatio, h = canvas.height / devicePixelRatio;
+    const { w: pw, h: ph } = plot(w, h);
+    const muted = token('--ink-muted'), accent = token('--accent'), rule = token('--rule');
+    const dark = document.documentElement.classList.contains('dark');
+    ctx.clearRect(0, 0, w, h);
+
+    ctx.strokeStyle = rule; ctx.lineWidth = 0.5; ctx.globalAlpha = 0.15;
+    for (const v of [40, 60, 80]) {
+      const y = PAD.top + ph - ((v - Y_MIN) / (Y_MAX - Y_MIN)) * ph;
+      ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(PAD.left + pw, y); ctx.stroke();
+    }
+
+    ctx.globalAlpha = 0.5; ctx.fillStyle = muted; ctx.font = '500 10px "Space Mono", monospace'; ctx.textAlign = 'center';
+    for (let yr = minDate.getFullYear() + 1; yr < maxDate.getFullYear(); yr++) {
+      const x = PAD.left + ((new Date(yr, 0, 1) - minDate) / dateRange) * pw;
+      ctx.fillText(String(yr), x, PAD.top + ph + 18);
+    }
+
+    const visible = Math.floor(progress * points.length);
+    ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
+    ctx.fillStyle = muted; ctx.globalAlpha = 0.3;
+    for (let i = 0; i < visible; i++) if (!points[i].horror) { const q = pos(points[i], w, h); ctx.beginPath(); ctx.arc(q.x, q.y, 3, 0, Math.PI * 2); ctx.fill(); }
+    ctx.fillStyle = accent; ctx.globalAlpha = 1;
+    if (dark) { ctx.shadowColor = accent; ctx.shadowBlur = 6; }
+    for (let i = 0; i < visible; i++) if (points[i].horror) { const q = pos(points[i], w, h); ctx.beginPath(); ctx.arc(q.x, q.y, 4.5, 0, Math.PI * 2); ctx.fill(); }
+    ctx.shadowBlur = 0; ctx.shadowColor = 'transparent'; ctx.globalAlpha = 1;
+  }
+
+  let startTs = null;
+  function animate(ts) {
+    if (startTs === null) startTs = ts;
+    progress = Math.min(1, (ts - startTs) / DURATION);
+    draw();
+    if (progress < 1) requestAnimationFrame(animate);
+  }
+
+  resize(); draw();
+  let started = false;
+  const observer = new IntersectionObserver(entries => {
+    if (started || !entries.some(e => e.isIntersecting)) return;
+    started = true;
+    if (reducedMotion) draw(); else requestAnimationFrame(animate);
+    observer.disconnect();
+  }, { threshold: 0.5 });
+  observer.observe(canvas);
+
+  canvas.addEventListener('mousemove', e => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    let best = -1, bestDist = 20;
+    points.forEach((p, i) => { const q = pos(p, rect.width, rect.height); const d = Math.hypot(q.x - mx, q.y - my); if (d < bestDist) { bestDist = d; best = i; } });
+    draw();
+    if (best < 0) { tooltip.classList.add('hidden'); return; }
+    const p = points[best];
+    tooltip.innerHTML = `<strong>${p.title}</strong> (${p.year})${p.horror ? ' · Horror' : ''}<br>Rating: ${p.rating}/100 · Watched: ${MONTH_NAMES[p.date.getMonth()]} ${p.date.getDate()}, ${p.date.getFullYear()}`;
+    tooltip.classList.remove('hidden');
+    let tx = mx + 12, ty = my - 10;
+    if (tx + 280 > rect.width) tx -= 300;
+    tooltip.style.left = `${tx}px`; tooltip.style.top = `${ty}px`;
+    const q = pos(p, rect.width, rect.height);
+    ctx.beginPath(); ctx.arc(q.x, q.y, 7, 0, Math.PI * 2); ctx.fillStyle = p.horror ? token('--accent') : token('--ink'); ctx.globalAlpha = 1; ctx.fill();
+  });
+  canvas.addEventListener('mouseleave', () => { tooltip.classList.add('hidden'); draw(); });
+  new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+  window.addEventListener('resize', () => { resize(); draw(); });
+</script>
