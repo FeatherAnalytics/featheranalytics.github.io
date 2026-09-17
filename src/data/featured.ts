@@ -1,5 +1,4 @@
 import type { ImageMetadata } from 'astro';
-import znhstryImage from '../assets/projects/znhstry.png';
 import urbanstackImage from '../assets/projects/urbanstack.png';
 import worldcupImage from '../assets/projects/worldcup-2026.png';
 import capitalFlowsImage from '../assets/projects/capital-flows-city.png';
@@ -16,7 +15,6 @@ export interface Headliner {
 }
 
 export interface Project {
-  slug: string;
   title: string;
   description: string;
   stack: string[];
@@ -35,7 +33,7 @@ export const zoneHistory: Headliner = {
   linkText: 'Open znhstry.com',
 };
 
-export const zoneHistoryImage = znhstryImage;
+export { default as zoneHistoryImage } from '../assets/projects/znhstry.png';
 
 export const cinemetrics: Headliner = {
   eyebrow: 'cinemetrics',
@@ -53,23 +51,20 @@ export const cinemetrics: Headliner = {
 
 export const projects: Project[] = [
   {
-    slug: 'urbanstack',
     title: 'UrbanStack',
     description: 'Multi-layer urban data platform combining transportation, infrastructure, walkability, and demographic data for major US cities.',
     stack: ['Next.js', 'deck.gl', 'DuckDB'],
-    href: 'https://www.featheranalytics.dev/urbanstack',
+    href: 'https://www.featheranalytics.dev/urbanstack/',
     image: urbanstackImage,
   },
   {
-    slug: 'worldcup-2026',
     title: 'World Cup 2026',
     description: 'Interactive map exploring where every player was born versus which national team they represent.',
     stack: ['Next.js', 'deck.gl', 'MapLibre'],
-    href: 'https://www.featheranalytics.dev/worldcup-2026',
+    href: 'https://www.featheranalytics.dev/worldcup-2026/',
     image: worldcupImage,
   },
   {
-    slug: 'capital-flows-city',
     title: 'Capital Flow Cityscape',
     description: 'A 3D cityscape where buildings represent financial securities and capital flows become visible paths through a living city. Unique city every page load.',
     stack: ['Three.js', 'Procedural Generation'],
@@ -77,11 +72,10 @@ export const projects: Project[] = [
     image: capitalFlowsImage,
   },
   {
-    slug: 'coaches-challenge',
     title: "Coach's Challenge",
     description: 'NFL coaching decision quality analyzer that grades play-calling against 27 years of EPA-optimal baselines.',
     stack: ['Next.js', 'Recharts', 'DuckDB'],
-    href: 'https://www.featheranalytics.dev/coaches-challenge',
+    href: 'https://www.featheranalytics.dev/coaches-challenge/',
     image: coachesImage,
   },
 ];

@@ -22,8 +22,7 @@ def refresh_zone_history():
                 SUM(event_count)::BIGINT AS events,
                 arg_max(legion_bots, activity_date)::DOUBLE AS legion,
                 arg_max(swarm_bots, activity_date)::DOUBLE AS swarm,
-                arg_max(faceless_bots, activity_date)::DOUBLE AS faceless,
-                arg_max(total_bots, activity_date)::DOUBLE AS total
+                arg_max(faceless_bots, activity_date)::DOUBLE AS faceless
             FROM main.fct_global_daily
             WHERE activity_date < date_trunc('month', current_date)::DATE
             GROUP BY 1
@@ -34,21 +33,17 @@ def refresh_zone_history():
     """).fetchall()
     con.close()
 
-    data = []
-    for month, events, legion, swarm, faceless, total in rows:
-        if total <= 0:
-            continue
-        raw_l = legion / total * 100
-        raw_s = swarm / total * 100
-        raw_f = faceless / total * 100
-        s = raw_l + raw_s + raw_f
-        data.append({
+    data = [
+        {
             "month": month.strftime("%Y-%m"),
             "events": int(events),
-            "legion": round(raw_l / s * 100, 1),
-            "swarm": round(raw_s / s * 100, 1),
-            "faceless": round(raw_f / s * 100, 1),
-        })
+            "legion": round(legion / s * 100, 1),
+            "swarm": round(swarm / s * 100, 1),
+            "faceless": round(faceless / s * 100, 1),
+        }
+        for month, events, legion, swarm, faceless in rows
+        if (s := legion + swarm + faceless) > 0
+    ]
 
     out = OUT_DIR / "zone-history-months.json"
     out.write_text(json.dumps(data, separators=(",", ":")))
@@ -71,15 +66,16 @@ def refresh_cinemetrics():
     """).fetchall()
     con.close()
 
-    data = []
-    for title, year, rating, watched, is_horror in rows:
-        data.append({
+    data = [
+        {
             "title": title,
             "year": year,
             "rating": int(rating),
             "watched": watched.strftime("%Y-%m-%d"),
             "horror": bool(is_horror),
-        })
+        }
+        for title, year, rating, watched, is_horror in rows
+    ]
 
     out = OUT_DIR / "cinemetrics-watches.json"
     out.write_text(json.dumps(data, separators=(",", ":")))
