@@ -100,7 +100,10 @@ html {
   font-family: var(--font-sans);
   color: var(--ink-body);
   background-color: var(--well);
-  transition: background-color 200ms ease, color 200ms ease;
+}
+
+*, ::before, ::after {
+  transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease;
 }
 
 :focus-visible {
@@ -137,6 +140,15 @@ pre {
   letter-spacing: -0.03em;
   line-height: 0.9;
   color: var(--ink);
+}
+
+.link-accent {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.link-accent:hover {
+  color: var(--accent-hover);
 }
 
 /* Prose colors come from the same tokens, so blog and page bodies flip with

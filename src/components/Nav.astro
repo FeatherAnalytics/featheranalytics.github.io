@@ -82,5 +82,6 @@ const isActive = (href: string) => (href === '/' ? currentPath === '/' : current
   menuButton.addEventListener('click', () => {
     const open = menu.classList.toggle('hidden') === false;
     menuButton.setAttribute('aria-expanded', String(open));
+    menuButton.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
   });
 </script>

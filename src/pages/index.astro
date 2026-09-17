@@ -31,7 +31,7 @@ import { zoneHistory, zoneHistoryImage, cinemetrics, projects } from '../data/fe
             {zoneHistory.proofPoints.map(point => <li>{point}</li>)}
           </ul>
           <p class="mt-5 eyebrow text-ink-muted">{zoneHistory.stack.join(' · ')}</p>
-          <a href={zoneHistory.href} target="_blank" rel="noopener noreferrer" class="inline-block mt-6 text-accent hover:text-accent-hover underline underline-offset-4">
+          <a href={zoneHistory.href} target="_blank" rel="noopener noreferrer" class="inline-block mt-6 link-accent">
             {zoneHistory.linkText} &nearr;
           </a>
         </div>
@@ -42,13 +42,11 @@ import { zoneHistory, zoneHistoryImage, cinemetrics, projects } from '../data/fe
           <p class="eyebrow text-accent">{cinemetrics.eyebrow}</p>
           <h2 class="display mt-3 text-3xl sm:text-4xl">{cinemetrics.title}</h2>
           <p class="mt-5 text-ink-body">{cinemetrics.description}</p>
-          <ul class="mt-5 space-y-1.5 text-sm text-ink-body">
-            {cinemetrics.proofPoints.map(point => (
-              <li class="flex gap-2.5"><span class="text-accent shrink-0" aria-hidden="true">&mdash;</span><span>{point}</span></li>
-            ))}
+          <ul class="mt-5 space-y-1.5 eyebrow text-ink">
+            {cinemetrics.proofPoints.map(point => <li>{point}</li>)}
           </ul>
           <p class="mt-5 eyebrow text-ink-muted">{cinemetrics.stack.join(' · ')}</p>
-          <a href={cinemetrics.href} target="_blank" rel="noopener noreferrer" class="inline-block mt-6 text-accent hover:text-accent-hover underline underline-offset-4">
+          <a href={cinemetrics.href} target="_blank" rel="noopener noreferrer" class="inline-block mt-6 link-accent">
             {cinemetrics.linkText} &nearr;
           </a>
         </div>
@@ -61,7 +59,7 @@ import { zoneHistory, zoneHistoryImage, cinemetrics, projects } from '../data/fe
         <h2 class="eyebrow text-ink-muted border-b border-rule pb-3">Projects</h2>
         {projects.map(project => <ProjectRow {...project} />)}
         <p class="mt-10 text-ink-body">
-          I also give informal <a href="/talks" class="text-accent hover:text-accent-hover underline underline-offset-4">talks</a> to friends and colleagues on whatever I've been reading about.
+          I also give informal <a href="/talks" class="link-accent">talks</a> to friends and colleagues on whatever I've been reading about.
         </p>
       </section>
     </main>
