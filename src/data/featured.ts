@@ -24,10 +24,10 @@ export interface Project {
 
 export const zoneHistory: Headliner = {
   eyebrow: 'Zone History',
-  title: 'Fourteen years of territory, scrubbed in the browser.',
+  title: 'Mapping fourteen years of events.',
   description:
     'All 2.68 million zones from the mobile game QONQR, visualized across 14 years and counting. Served as Parquet with DuckDB in the browser, plus a query page for self-service analysis.',
-  proofPoints: ['13.7B cells made linear', 'Published Parquet marts, queryable without a clone'],
+  proofPoints: ['13.7B cells made linear', 'Queryable Parquet marts'],
   stack: ['Python', 'polars', 'DuckDB', 'dbt', 'Next.js', 'deck.gl', 'Cloudflare'],
   href: 'https://znhstry.com',
   linkText: 'Open znhstry.com',
@@ -39,10 +39,10 @@ export const cinemetrics: Headliner = {
   eyebrow: 'cinemetrics',
   title: 'Eight years of film-watching, end to end',
   description:
-    'A full analytics pipeline over my own Letterboxd history. Data is enriched from the TMDB and OMDb APIs and modeled in DuckDB with dbt. The result is a static, cross-filtered dashboard with an ML recommendation engine, built in CI and served from your browser.',
+    'A full analytics pipeline over my own Letterboxd history. Data is enriched from the TMDB and OMDb APIs and modeled in DuckDB with dbt. The result is a static, cross-filtered dashboard with an ML recommendation engine, built with CI and served in your browser.',
   proofPoints: [
-    'Every chart responds to every filter in real time and every view generates a shareable URL.',
-    'A GitHub Action pulls new ratings every day, retrains the embeddings, and redeploys.',
+    'Cross-filtered charts with shareable URLs',
+    'Daily retrain and redeploy via GitHub Actions',
   ],
   stack: ['Python', 'dbt', 'DuckDB', 'scikit-learn', 'Next.js', 'D3', 'Cloudflare R2'],
   href: 'https://www.featheranalytics.dev/cinemetrics/',
