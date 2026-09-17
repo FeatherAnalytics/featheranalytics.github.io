@@ -6,15 +6,16 @@ import months from '../data/zone-history-months.json';
     <h1 class="display text-ink leading-[0.9] text-[clamp(3.5rem,8vw,7rem)]">
       David<br class="aria-hidden" /> Hardage
     </h1>
-    <p class="mt-6 text-lg text-ink-body">
-      <a href="https://znhstry.com" target="_blank" rel="noopener noreferrer" class="hover:text-accent transition-colors">
-        Fourteen years of a mobile game, one barb per month.
-      </a>
-    </p>
+    <p class="mt-6 text-lg text-ink-body">Data projects, talks, and writing.</p>
   </div>
   <div id="feather-wrap" class="order-1 lg:order-2 relative w-[90vw] max-w-[500px] lg:w-full mx-auto">
-    <svg id="feather-svg" viewBox="0 0 400 700" class="w-full h-[65svh] min-h-[400px] cursor-pointer" role="img" aria-label="A feather drawn from fourteen years of Zone History data, one barb per month"></svg>
-    <div id="feather-tooltip" class="hidden absolute z-10 max-w-[min(240px,90vw)] px-3 py-2 rounded-lg border border-rule bg-card text-ink-body text-sm pointer-events-none shadow-sm"></div>
+    <svg id="feather-svg" viewBox="0 0 400 700" class="w-full h-[65svh] min-h-[400px]" role="img" aria-label="A feather drawn from fourteen years of Zone History data, one barb per month"></svg>
+    <div id="feather-tooltip" class="hidden absolute z-10 max-w-[min(320px,90vw)] px-3 py-2 rounded-lg border border-rule bg-card text-ink-body text-sm pointer-events-none shadow-sm"></div>
+    <p class="mt-2 text-left lg:text-right">
+      <a href="https://znhstry.com" target="_blank" rel="noopener noreferrer" class="eyebrow text-ink-muted hover:text-accent transition-colors">
+        Fourteen years of a mobile game, one barb per month &middot; Zone History &nearr;
+      </a>
+    </p>
   </div>
 </section>
 
@@ -62,17 +63,18 @@ import months from '../data/zone-history-months.json';
     const y = START_Y + i * spacing;
     const side = i % 2 === 0 ? -1 : 1;
     const lead = leading(m);
+    const sw = Math.max(2.5, norm * 5);
     const line = document.createElementNS(NS, 'line');
     line.setAttribute('x1', CX); line.setAttribute('y1', y);
     line.setAttribute('x2', CX + Math.cos(BARB_ANGLE) * len * side);
     line.setAttribute('y2', y - Math.sin(BARB_ANGLE) * len);
     line.setAttribute('stroke', COLOR[lead]);
-    line.setAttribute('stroke-width', Math.max(2.5, norm * 5));
+    line.setAttribute('stroke-width', sw);
     line.setAttribute('stroke-linecap', 'round');
     line.setAttribute('opacity', '0');
     line.dataset.leading = lead;
     svg.appendChild(line);
-    return { el: line, y };
+    return { el: line, y, baseStrokeWidth: sw };
   });
 
   let timers = [];
@@ -110,42 +112,125 @@ import months from '../data/zone-history-months.json';
     pt.y = src.clientY;
     return pt.matrixTransform(svg.getScreenCTM().inverse()).y;
   }
+
   function nearest(y) {
     return Math.max(0, Math.min(barbs.length - 1, Math.round((y - START_Y) / spacing)));
   }
-  function highlight(idx) {
-    if (revealing) return;
-    barbs.forEach((b, i) => b.el.setAttribute('opacity', idx < 0 || i === idx ? '1' : '0.3'));
-  }
-  function showTooltip(idx, e) {
-    const m = months[idx];
+
+  function formatMonth(m) {
     const [yr, mo] = m.month.split('-');
-    const label = new Date(Date.UTC(Number(yr), Number(mo) - 1)).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
-    tooltip.innerHTML = `<strong>${label}</strong><br>${m.events.toLocaleString('en-US')} events<br>Legion ${m.legion.toFixed(1)}% · Swarm ${m.swarm.toFixed(1)}% · Faceless ${m.faceless.toFixed(1)}%`;
+    return new Date(Date.UTC(Number(yr), Number(mo) - 1)).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+  }
+
+  let pinnedIdx = -1;
+
+  function highlightWithPin(hoverIdx) {
+    if (revealing) return;
+    barbs.forEach((b, i) => {
+      const active = i === hoverIdx || i === pinnedIdx;
+      b.el.setAttribute('opacity', (hoverIdx < 0 && pinnedIdx < 0) || active ? '1' : '0.3');
+      b.el.setAttribute('stroke-width', i === pinnedIdx ? b.baseStrokeWidth + 3 : b.baseStrokeWidth);
+    });
+  }
+
+  function positionTooltip(e) {
     tooltip.classList.remove('hidden');
     const wrap = svg.parentElement.getBoundingClientRect();
-    const pt = e.touches ? e.touches[0] : e;
-    let tx = pt.clientX - wrap.left + 14;
-    let ty = pt.clientY - wrap.top - 10;
-    if (tx + 240 > wrap.width) tx -= 260;
-    tx = Math.max(0, Math.min(tx, wrap.width - (tooltip.offsetWidth || 240)));
+    const src = e.touches ? e.touches[0] : e;
+    let tx = src.clientX - wrap.left + 14;
+    let ty = src.clientY - wrap.top - 10;
+    if (tx + 320 > wrap.width) tx -= 340;
+    tx = Math.max(0, Math.min(tx, wrap.width - (tooltip.offsetWidth || 320)));
     if (ty < 0) ty = 10;
     tooltip.style.left = `${tx}px`;
     tooltip.style.top = `${ty}px`;
   }
-  function clear() { tooltip.classList.add('hidden'); highlight(-1); }
+
+  function showSingleTooltip(idx, e) {
+    const m = months[idx];
+    tooltip.innerHTML = `<strong>${formatMonth(m)}</strong><br>${m.events.toLocaleString('en-US')} events<br>Legion ${m.legion.toFixed(1)}% &middot; Swarm ${m.swarm.toFixed(1)}% &middot; Faceless ${m.faceless.toFixed(1)}%`;
+    positionTooltip(e);
+  }
+
+  function showCompareTooltip(hoverIdx, e) {
+    const p = months[pinnedIdx];
+    const h = months[hoverIdx];
+    const rows = [
+      ['Events', p.events.toLocaleString('en-US'), h.events.toLocaleString('en-US'), h.events > p.events],
+      ['Legion', p.legion.toFixed(1) + '%', h.legion.toFixed(1) + '%', h.legion > p.legion],
+      ['Swarm', p.swarm.toFixed(1) + '%', h.swarm.toFixed(1) + '%', h.swarm > p.swarm],
+      ['Faceless', p.faceless.toFixed(1) + '%', h.faceless.toFixed(1) + '%', h.faceless > p.faceless],
+    ];
+    let html = `<strong>${formatMonth(p)} &rarr; ${formatMonth(h)}</strong>`;
+    for (const [label, pv, hv, higher] of rows) {
+      const color = higher ? 'var(--accent)' : 'var(--ink-muted)';
+      html += `<br>${label}: ${pv} &rarr; <span style="color:${color}">${hv}</span>`;
+    }
+    tooltip.innerHTML = html;
+    positionTooltip(e);
+  }
+
+  function pin(idx) {
+    pinnedIdx = idx;
+  }
+
+  function unpin() {
+    pinnedIdx = -1;
+  }
+
   function move(e) {
     if (revealing) return;
     const idx = nearest(svgY(e));
-    highlight(idx);
-    showTooltip(idx, e);
+    highlightWithPin(idx);
+    if (pinnedIdx >= 0 && idx !== pinnedIdx) {
+      showCompareTooltip(idx, e);
+    } else {
+      showSingleTooltip(pinnedIdx >= 0 ? pinnedIdx : idx, e);
+    }
   }
 
-  let dragging = false;
+  function clearHover() {
+    if (pinnedIdx < 0) {
+      tooltip.classList.add('hidden');
+      highlightWithPin(-1);
+    } else {
+      highlightWithPin(-1);
+    }
+  }
+
   svg.addEventListener('mousemove', move);
-  svg.addEventListener('mouseleave', clear);
-  svg.addEventListener('click', () => { clear(); drawIn(); });
+  svg.addEventListener('mouseleave', clearHover);
+  svg.addEventListener('click', (e) => {
+    if (revealing) return;
+    const idx = nearest(svgY(e));
+    if (pinnedIdx === idx) {
+      unpin();
+      tooltip.classList.add('hidden');
+      highlightWithPin(-1);
+    } else {
+      pin(idx);
+      showSingleTooltip(idx, e);
+      highlightWithPin(idx);
+    }
+  });
+
+  let dragging = false;
   svg.addEventListener('touchstart', e => { dragging = false; move(e); }, { passive: true });
   svg.addEventListener('touchmove', e => { dragging = true; move(e); }, { passive: true });
-  svg.addEventListener('touchend', e => { if (e.cancelable) e.preventDefault(); clear(); if (!dragging) drawIn(); dragging = false; });
+  svg.addEventListener('touchend', e => {
+    if (e.cancelable) e.preventDefault();
+    if (!dragging) {
+      const idx = nearest(svgY(e));
+      if (pinnedIdx === idx) {
+        unpin();
+        tooltip.classList.add('hidden');
+        highlightWithPin(-1);
+      } else {
+        pin(idx);
+      }
+    } else {
+      clearHover();
+    }
+    dragging = false;
+  });
 </script>
