@@ -14,20 +14,27 @@ import watches from '../data/cinemetrics-watches.json';
   const ctx = canvas.getContext('2d');
   const tooltip = document.getElementById('constellation-tooltip');
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const PAD = { top: 20, bottom: 40, left: 20, right: 20 };
   const Y_MIN = 20, Y_MAX = 100;
   const DURATION = 1500;
 
   let seed = 42;
   function rand() { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
-  const points = watches.map(w => ({ ...w, date: new Date(w.watched), jx: (rand() - 0.5) * 3, jy: (rand() - 0.5) * 8 }));
-  const minDate = new Date('2019-01-01');
+  const points = watches.map(w => ({ ...w, date: new Date(w.watched + 'T00:00:00'), jx: (rand() - 0.5) * 3, jy: (rand() - 0.5) * 8 }));
+  const minDate = new Date(2019, 0, 1);
   const lastWatch = points.reduce((max, p) => (p.date > max ? p.date : max), minDate);
   const maxDate = new Date(lastWatch.getFullYear() + 1, 0, 1);
   const dateRange = maxDate - minDate;
 
-  function token(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  let colors = { muted: '', accent: '', rule: '', ink: '' };
+  function refreshColors() {
+    const s = getComputedStyle(document.documentElement);
+    colors.muted = s.getPropertyValue('--ink-muted').trim();
+    colors.accent = s.getPropertyValue('--accent').trim();
+    colors.rule = s.getPropertyValue('--rule').trim();
+    colors.ink = s.getPropertyValue('--ink').trim();
+  }
+  refreshColors();
 
   function resize() {
     const rect = canvas.parentElement.getBoundingClientRect();
@@ -39,7 +46,7 @@ import watches from '../data/cinemetrics-watches.json';
   function plot(w, h) { return { w: w - PAD.left - PAD.right, h: h - PAD.top - PAD.bottom }; }
   function pos(p, w, h) {
     const { w: pw, h: ph } = plot(w, h);
-    const t = (p.date - minDate + p.jx * 86400000 * 30) / dateRange;
+    const t = (p.date - minDate + p.jx * 86400000 * 6) / dateRange;
     const x = PAD.left + Math.max(0, Math.min(1, t)) * pw;
     const yNorm = (Math.max(Y_MIN, Math.min(Y_MAX, p.rating + p.jy)) - Y_MIN) / (Y_MAX - Y_MIN);
     return { x, y: PAD.top + ph - yNorm * ph };
@@ -49,17 +56,16 @@ import watches from '../data/cinemetrics-watches.json';
   function draw() {
     const w = canvas.width / devicePixelRatio, h = canvas.height / devicePixelRatio;
     const { w: pw, h: ph } = plot(w, h);
-    const muted = token('--ink-muted'), accent = token('--accent'), rule = token('--rule');
     const dark = document.documentElement.classList.contains('dark');
     ctx.clearRect(0, 0, w, h);
 
-    ctx.strokeStyle = rule; ctx.lineWidth = 0.5; ctx.globalAlpha = 0.15;
+    ctx.strokeStyle = colors.rule; ctx.lineWidth = 0.5; ctx.globalAlpha = 0.15;
     for (const v of [40, 60, 80]) {
       const y = PAD.top + ph - ((v - Y_MIN) / (Y_MAX - Y_MIN)) * ph;
       ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(PAD.left + pw, y); ctx.stroke();
     }
 
-    ctx.globalAlpha = 0.5; ctx.fillStyle = muted; ctx.font = '500 10px "Space Mono", monospace'; ctx.textAlign = 'center';
+    ctx.globalAlpha = 0.5; ctx.fillStyle = colors.muted; ctx.font = '500 10px "Space Mono", monospace'; ctx.textAlign = 'center';
     for (let yr = minDate.getFullYear() + 1; yr < maxDate.getFullYear(); yr++) {
       const x = PAD.left + ((new Date(yr, 0, 1) - minDate) / dateRange) * pw;
       ctx.fillText(String(yr), x, PAD.top + ph + 18);
@@ -67,10 +73,10 @@ import watches from '../data/cinemetrics-watches.json';
 
     const visible = Math.floor(progress * points.length);
     ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
-    ctx.fillStyle = muted; ctx.globalAlpha = 0.3;
+    ctx.fillStyle = colors.muted; ctx.globalAlpha = 0.3;
     for (let i = 0; i < visible; i++) if (!points[i].horror) { const q = pos(points[i], w, h); ctx.beginPath(); ctx.arc(q.x, q.y, 3, 0, Math.PI * 2); ctx.fill(); }
-    ctx.fillStyle = accent; ctx.globalAlpha = 1;
-    if (dark) { ctx.shadowColor = accent; ctx.shadowBlur = 6; }
+    ctx.fillStyle = colors.accent; ctx.globalAlpha = 1;
+    if (dark) { ctx.shadowColor = colors.accent; ctx.shadowBlur = 6; }
     for (let i = 0; i < visible; i++) if (points[i].horror) { const q = pos(points[i], w, h); ctx.beginPath(); ctx.arc(q.x, q.y, 4.5, 0, Math.PI * 2); ctx.fill(); }
     ctx.shadowBlur = 0; ctx.shadowColor = 'transparent'; ctx.globalAlpha = 1;
   }
@@ -84,6 +90,7 @@ import watches from '../data/cinemetrics-watches.json';
   }
 
   resize(); draw();
+  document.fonts.ready.then(() => draw());
   let started = false;
   const observer = new IntersectionObserver(entries => {
     if (started || !entries.some(e => e.isIntersecting)) return;
@@ -93,23 +100,49 @@ import watches from '../data/cinemetrics-watches.json';
   }, { threshold: 0.5 });
   observer.observe(canvas);
 
-  canvas.addEventListener('mousemove', e => {
+  function findNearest(clientX, clientY) {
     const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-    let best = -1, bestDist = 20;
+    const mx = clientX - rect.left, my = clientY - rect.top;
+    let best = -1, bestDist = 30;
     points.forEach((p, i) => { const q = pos(p, rect.width, rect.height); const d = Math.hypot(q.x - mx, q.y - my); if (d < bestDist) { bestDist = d; best = i; } });
+    return { best, mx, my, rect };
+  }
+  function showPointTooltip(best, mx, my, rect) {
     draw();
     if (best < 0) { tooltip.classList.add('hidden'); return; }
     const p = points[best];
-    tooltip.innerHTML = `<strong>${p.title}</strong> (${p.year})${p.horror ? ' · Horror' : ''}<br>Rating: ${p.rating}/100 · Watched: ${MONTH_NAMES[p.date.getMonth()]} ${p.date.getDate()}, ${p.date.getFullYear()}`;
+    const watchedLabel = p.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    tooltip.textContent = '';
+    const strong = document.createElement('strong');
+    strong.textContent = p.title;
+    tooltip.appendChild(strong);
+    tooltip.appendChild(document.createTextNode(` (${p.year})${p.horror ? ' · Horror' : ''}`));
+    tooltip.appendChild(document.createElement('br'));
+    tooltip.appendChild(document.createTextNode(`Rating: ${p.rating}/100 · Watched: ${watchedLabel}`));
     tooltip.classList.remove('hidden');
     let tx = mx + 12, ty = my - 10;
     if (tx + 280 > rect.width) tx -= 300;
     tooltip.style.left = `${tx}px`; tooltip.style.top = `${ty}px`;
     const q = pos(p, rect.width, rect.height);
-    ctx.beginPath(); ctx.arc(q.x, q.y, 7, 0, Math.PI * 2); ctx.fillStyle = p.horror ? token('--accent') : token('--ink'); ctx.globalAlpha = 1; ctx.fill();
+    ctx.beginPath(); ctx.arc(q.x, q.y, 7, 0, Math.PI * 2); ctx.fillStyle = p.horror ? colors.accent : colors.ink; ctx.globalAlpha = 1; ctx.fill();
+  }
+
+  canvas.addEventListener('mousemove', e => {
+    const { best, mx, my, rect } = findNearest(e.clientX, e.clientY);
+    showPointTooltip(best, mx, my, rect);
   });
   canvas.addEventListener('mouseleave', () => { tooltip.classList.add('hidden'); draw(); });
-  new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+  canvas.addEventListener('touchstart', e => {
+    const t = e.touches[0];
+    const { best, mx, my, rect } = findNearest(t.clientX, t.clientY);
+    showPointTooltip(best, mx, my, rect);
+  }, { passive: true });
+  canvas.addEventListener('touchmove', e => {
+    const t = e.touches[0];
+    const { best, mx, my, rect } = findNearest(t.clientX, t.clientY);
+    showPointTooltip(best, mx, my, rect);
+  }, { passive: true });
+  canvas.addEventListener('touchend', () => { tooltip.classList.add('hidden'); draw(); });
+  new MutationObserver(() => { refreshColors(); draw(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
   window.addEventListener('resize', () => { resize(); draw(); });
 </script>
