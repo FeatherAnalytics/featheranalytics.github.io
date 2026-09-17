@@ -9,25 +9,18 @@ const { title, description, stack, href, image } = Astro.props;
   href={href}
   target="_blank"
   rel="noopener noreferrer"
-  aria-label={`Open ${title}`}
   class="group grid grid-cols-1 md:grid-cols-[30%_1fr] gap-4 md:gap-8 py-8 border-b border-rule"
 >
-  {image ? (
-    <Image
-      src={image}
-      alt={`${title} screenshot`}
-      width={640}
-      height={480}
-      format="webp"
-      class="w-full aspect-[4/3] object-cover rounded-lg border border-rule group-hover:border-accent transition-colors"
-    />
-  ) : (
-    <div class="w-full aspect-[4/3] rounded-lg border border-rule group-hover:border-accent transition-colors flex items-center justify-center">
-      <span class="eyebrow text-ink-muted">{title}</span>
-    </div>
-  )}
+  <Image
+    src={image}
+    alt={`${title} screenshot`}
+    widths={[640, 1280]}
+    sizes="(min-width: 768px) 30vw, 100vw"
+    format="webp"
+    class="w-full aspect-[4/3] object-cover rounded-lg border border-rule group-hover:border-accent transition-colors"
+  />
   <div class="flex flex-col justify-center">
-    <h3 class="display text-2xl sm:text-3xl group-hover:text-accent transition-colors">{title}</h3>
+    <h3 class="display text-2xl sm:text-3xl group-hover:text-accent transition-colors">{title} <span class="text-ink-muted text-base" aria-hidden="true">&nearr;</span></h3>
     <p class="mt-2 text-ink-body">{description}</p>
     <p class="mt-3 eyebrow text-ink-muted">{stack.join(' · ')}</p>
   </div>

@@ -19,7 +19,7 @@ export interface Project {
   description: string;
   stack: string[];
   href: string;
-  image?: ImageMetadata;
+  image: ImageMetadata;
 }
 
 export const zoneHistory: Headliner = {

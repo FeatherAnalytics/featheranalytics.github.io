@@ -131,15 +131,13 @@ pre {
   letter-spacing: 0.12em;
 }
 
-/* Bricolage's optical-size and width axes only engage when set explicitly;
-   without them the display face reads like a slightly quirky Geist. */
-.display {
-  font-family: var(--font-display);
-  font-variation-settings: "opsz" 96, "wdth" 75;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  line-height: 0.9;
-  color: var(--ink);
+@layer components {
+  .display {
+    font-family: var(--font-display);
+    font-variation-settings: "opsz" 96, "wdth" 75;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+  }
 }
 
 .link-accent {
