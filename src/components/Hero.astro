@@ -18,7 +18,7 @@ import months from '../data/zone-history-months.json';
   </div>
 </section>
 
-<style>
+<style is:global>
   html.dark #feather-svg line[data-leading="legion"] {
     filter: drop-shadow(0 0 3px var(--accent));
   }
@@ -28,7 +28,6 @@ import months from '../data/zone-history-months.json';
   const svg = document.getElementById('feather-svg');
   const tooltip = document.getElementById('feather-tooltip');
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const NS = 'http://www.w3.org/2000/svg';
 
   const VIEW_H = 700;
@@ -62,29 +61,37 @@ import months from '../data/zone-history-months.json';
     const len = Math.max(4, norm * MAX_BARB);
     const y = START_Y + i * spacing;
     const side = i % 2 === 0 ? -1 : 1;
+    const lead = leading(m);
     const line = document.createElementNS(NS, 'line');
     line.setAttribute('x1', CX); line.setAttribute('y1', y);
     line.setAttribute('x2', CX + Math.cos(BARB_ANGLE) * len * side);
     line.setAttribute('y2', y - Math.sin(BARB_ANGLE) * len);
-    line.setAttribute('stroke', COLOR[leading(m)]);
+    line.setAttribute('stroke', COLOR[lead]);
     line.setAttribute('stroke-width', Math.max(2.5, norm * 5));
     line.setAttribute('stroke-linecap', 'round');
     line.setAttribute('opacity', '0');
-    line.dataset.leading = leading(m);
+    line.dataset.leading = lead;
     svg.appendChild(line);
     return { el: line, y };
   });
 
+  let timers = [];
+  let revealing = false;
   function drawIn() {
+    timers.forEach(clearTimeout);
+    timers = [];
+    revealing = true;
     barbs.forEach((b, i) => {
       b.el.style.transition = '';
       b.el.setAttribute('opacity', '0');
       if (reducedMotion) { b.el.setAttribute('opacity', '1'); return; }
-      setTimeout(() => {
+      timers.push(setTimeout(() => {
         b.el.style.transition = 'opacity 150ms ease-out';
         b.el.setAttribute('opacity', '1');
-      }, (i / barbs.length) * 1500);
+        if (i === barbs.length - 1) revealing = false;
+      }, (i / barbs.length) * 1500));
     });
+    if (reducedMotion) revealing = false;
   }
 
   let started = false;
@@ -97,35 +104,42 @@ import months from '../data/zone-history-months.json';
   observer.observe(svg);
 
   function svgY(e) {
-    const rect = svg.getBoundingClientRect();
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    return ((clientY - rect.top) / rect.height) * VIEW_H;
+    const pt = svg.createSVGPoint();
+    const src = e.touches ? e.touches[0] : e;
+    pt.x = src.clientX;
+    pt.y = src.clientY;
+    return pt.matrixTransform(svg.getScreenCTM().inverse()).y;
   }
   function nearest(y) {
-    let best = 0, bestDist = Infinity;
-    barbs.forEach((b, i) => { const d = Math.abs(b.y - y); if (d < bestDist) { bestDist = d; best = i; } });
-    return best;
+    return Math.max(0, Math.min(barbs.length - 1, Math.round((y - START_Y) / spacing)));
   }
   function highlight(idx) {
+    if (revealing) return;
     barbs.forEach((b, i) => b.el.setAttribute('opacity', idx < 0 || i === idx ? '1' : '0.3'));
   }
   function showTooltip(idx, e) {
     const m = months[idx];
     const [yr, mo] = m.month.split('-');
-    tooltip.innerHTML = `<strong>${MONTH_NAMES[Number(mo) - 1]} ${yr}</strong><br>${m.events.toLocaleString('en-US')} events<br>Legion ${m.legion.toFixed(1)}% · Swarm ${m.swarm.toFixed(1)}% · Faceless ${m.faceless.toFixed(1)}%`;
+    const label = new Date(Date.UTC(Number(yr), Number(mo) - 1)).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+    tooltip.innerHTML = `<strong>${label}</strong><br>${m.events.toLocaleString('en-US')} events<br>Legion ${m.legion.toFixed(1)}% · Swarm ${m.swarm.toFixed(1)}% · Faceless ${m.faceless.toFixed(1)}%`;
     tooltip.classList.remove('hidden');
     const wrap = svg.parentElement.getBoundingClientRect();
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    let tx = clientX - wrap.left + 14;
-    let ty = clientY - wrap.top - 10;
+    const pt = e.touches ? e.touches[0] : e;
+    let tx = pt.clientX - wrap.left + 14;
+    let ty = pt.clientY - wrap.top - 10;
     if (tx + 240 > wrap.width) tx -= 260;
+    tx = Math.max(0, Math.min(tx, wrap.width - (tooltip.offsetWidth || 240)));
     if (ty < 0) ty = 10;
     tooltip.style.left = `${tx}px`;
     tooltip.style.top = `${ty}px`;
   }
   function clear() { tooltip.classList.add('hidden'); highlight(-1); }
-  function move(e) { const idx = nearest(svgY(e)); highlight(idx); showTooltip(idx, e); }
+  function move(e) {
+    if (revealing) return;
+    const idx = nearest(svgY(e));
+    highlight(idx);
+    showTooltip(idx, e);
+  }
 
   let dragging = false;
   svg.addEventListener('mousemove', move);
