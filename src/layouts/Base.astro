@@ -6,7 +6,7 @@ interface Props {
   description?: string;
 }
 
-const { title, description = 'Personal site of David Hardage — data projects, talks, and writing.' } = Astro.props;
+const { title, description = 'Personal site of David Hardage — data pipelines and visualizations.' } = Astro.props;
 const canonicalUrl = new URL(Astro.url.pathname, Astro.site).href;
 const ogImageUrl = new URL('/og.png', Astro.site).href;
 ---
