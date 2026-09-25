@@ -3,6 +3,7 @@ import urbanstackImage from '../assets/projects/urbanstack.png';
 import worldcupImage from '../assets/projects/worldcup-2026.png';
 import capitalFlowsImage from '../assets/projects/capital-flows-city.png';
 import coachesImage from '../assets/projects/coaches-challenge.png';
+import diplomacyImage from '../assets/projects/diplomacy-lab.png';
 
 export interface Headliner {
   eyebrow: string;
@@ -77,5 +78,12 @@ export const projects: Project[] = [
     stack: ['Next.js', 'Recharts', 'DuckDB'],
     href: 'https://www.featheranalytics.dev/coaches-challenge/',
     image: coachesImage,
+  },
+  {
+    title: 'Diplomacy Lab',
+    description: 'What happens after an opening, across 37,202 online Diplomacy games: an exact-match opening explorer and opening matchups analyzed as two-player games.',
+    stack: ['Python', 'polars', 'Vanilla JS', 'Game theory'],
+    href: 'https://www.featheranalytics.dev/diplomacy-lab/',
+    image: diplomacyImage,
   },
 ];
